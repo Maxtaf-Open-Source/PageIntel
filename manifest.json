@@ -43,7 +43,6 @@
     {
       "resources": [
         "dist/externalScript.js",
-        "dist/quickstart.html",
         "dist/content.bundle.js",
         "dist/api.js",
         "dist/generalTags.js",

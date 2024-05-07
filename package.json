@@ -1,5 +1,5 @@
 {
-  "name": "maximo-validator",
+  "name": "pageintel",
   "version": "1.0.0",
   "description": "",
   "main": "api.js",
@@ -7,7 +7,11 @@
     "build": "webpack --mode=production --progress",
     "watch": "webpack --watch",
     "dev": "webpack --mode=development --devtool inline-source-map --watch",
-    "webpack": "webpack --progress"
+    "webpack": "webpack --progress",
+    "version": "node update-version.js && git add .",
+    "preversion": "npm run build",
+    "postversion": "git push && git push --tags",
+    "pack": "npm run build && zip -r release-$(npm pkg get version | tr -d '\"').zip dist/"
   },
   "keywords": [],
   "author": "",

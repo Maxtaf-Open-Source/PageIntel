@@ -101,7 +101,7 @@ chrome.runtime.onInstalled.addListener(function (details) {
     console.log('Extension installed.');
 
     // Open the quick start guide in a new tab when the extension is installed
-    chrome.tabs.create({ url: chrome.runtime.getURL('dist/quickstart.html') }, function (tab) {
+    chrome.tabs.create({ url: 'https://maxtaf-open-source.github.io/PageIntel/docs/quickstart.html' }, function (tab) {
       console.log('Quick start guide opened in tab:', tab.id);
     });
   }
