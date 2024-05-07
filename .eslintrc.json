@@ -1,0 +1,23 @@
+{
+  "extends": "eslint:recommended",
+  "rules": {
+    // Focus on potential problems without style preferences
+    "no-unused-vars": "warn",  // Warns about variables that have been declared but not used
+    "no-unreachable": "warn",  // Warns about unreachable code after return, throw, continue, and break statements
+
+    // You can set these rules to "off" if they are not relevant to dead code detection
+    "semi": "off",  // Turn off semicolon checking
+    "space-before-function-paren": "off",  // Turn off space before function parentheses checking
+    "indent": "off",  // Turn off indent checking
+    "linebreak-style": "off",  // Turn off linebreak style checking
+    "quotes": "off",  // Turn off quotes style checking
+    "no-console": "off",  // Turn off console statements checking
+    "no-redeclare": "warn",  // Warn about redeclaring variables
+    "no-empty": "warn"  // Warn about empty blocks
+  },
+  "env": {
+    "browser": true,  // Defines global variables that are predefined
+    "node": true,  // Defines Node.js global variables and Node.js scoping
+    "es2021": true  // Sets the ECMAScript version to 2021
+  }
+}

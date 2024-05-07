@@ -1,0 +1,62 @@
+{
+  "manifest_version": 3,
+  "name": "PageIntel by Maxtaf",
+  "version": "1.0",
+  "description": "PageIntel by Maxtaf is a dynamic Chrome extension designed to transform your web browsing experience by enabling personalized extraction and analysis of web content. With its powerful custom tagging system and integration with advanced AI models, PageIntel serves as a versatile tool for users in diverse industries, from market analysis and academic research to real estate and personal shopping. Whether you're summarizing articles, tracking price changes, analyzing data, or planning your next trip, PageIntel streamlines the process, providing you with the insights you need, right when you need them. This tool empowers users to configure custom tasks that suit their unique needs, making any web page a rich source of tailored information.",
+  "icons": {
+    "16": "icons/PageIntel_Brandmark_10 1.png",
+    "48": "icons/PageIntel_Brandmark_10 1.png",
+    "128": "icons/PageIntel_Brandmark_10 1.png"
+  },
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage",
+    "tabs",
+    "sidePanel"
+  ], 
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "action": {
+    "default_popup": "dist/panel.html"
+  },
+  "side_panel": {
+    "default_path": "dist/panel.html"
+  },
+  "background": {
+    "service_worker": "dist/background.bundle.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "css": ["dist/style.css"],
+      "js": ["dist/content.bundle.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "dist/externalScript.js",
+        "dist/quickstart.html",
+        "dist/content.bundle.js",
+        "dist/api.js",
+        "dist/generalTags.js",
+        "dist/settings.js",
+        "dist/tagManagement.js",
+        "dist/taskManagement.js",
+        "dist/panel.js"
+      ],
+      "matches": ["<all_urls>"]
+    },
+    {
+      "resources": ["dist/style.css"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

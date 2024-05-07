@@ -1,0 +1,614 @@
+/* Spinner styles */
+.pageintel-spinner {
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  border-top: 4px solid #3498db;
+  width: 40px;
+  height: 40px;
+  animation: pageintel-spin 2s linear infinite;
+}
+
+@keyframes pageintel-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Full-width textarea styles */
+#pageintel-validation-tasks {
+  width: 100%;
+  min-height: 200px;
+  box-sizing: border-box;
+}
+
+/* Style adjustments for the container */
+body.pageintel-body,
+div.pageintel-div {
+  margin: 0;
+  padding: 0;
+}
+
+.pageintel-settings-icon {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+  filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.pageintel-settings-icon:hover {
+  transform: rotate(45deg);
+}
+
+.pageintel-settings-icon svg path {
+  fill: #999;
+}
+
+.pageintel-modal {
+  display: none;
+  position: fixed;
+  z-index: 1;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+.pageintel-modal-content {
+  background-color: #fefefe;
+  margin: 0% auto;
+  padding: 0px;
+  border: 0px solid #888;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.pageintel-close {
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.pageintel-close:hover,
+.pageintel-close:focus {
+  color: black;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+/* Remove the @font-face task */
+
+#pageintel-copy-result-popup,
+#pageintel-close-result-popup,
+#pageintel-copy-result,
+#pageintel-close-result {
+  font-size: 20px;
+  line-height: 1;
+  display: inline-block;
+  color: #4285F4;
+  cursor: pointer;
+}
+
+#pageintel-firstTimeAlert {
+  display: none; /* initially hidden */
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0; /* stretch to cover the entire area */
+  background-color: rgba(0,0,0,0.9);
+  color: white;
+  padding: 20px;
+  text-align: center;
+  z-index: 1000;
+  overflow: auto; /* in case the content is bigger than the screen */
+}
+
+#pageintel-new-validation-tasks {
+  width: 100%;
+  min-height: 20em;
+  box-sizing: border-box;
+}
+
+input[type="text"].pageintel-input-text,
+input[type="checkbox"].pageintel-input-checkbox {
+  height: 25px;
+  padding: 4px;
+  margin-bottom: 10px;
+  box-sizing: border-box;
+}
+
+select.pageintel-select {
+  height: 25px;
+  padding: 4px;
+  margin-bottom: 10px;
+  box-sizing: border-box;
+}
+
+.material-icons {
+  font-family: 'Material Icons';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+  color: #4285F4;
+}
+
+
+.material-icons:hover {
+  color: #555;
+}
+
+#pageintel-validationResult .material-icons {
+  font-family: 'Material Icons';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+  color: #4285F4;
+}
+
+br.pageintel-br {
+  margin-bottom: 10px;
+  display: block;
+}
+
+.pageintel-modal-content {
+  padding: 5px;
+  box-sizing: border-box;
+}
+
+select.pageintel-select,
+input[type="checkbox"].pageintel-input-checkbox {
+  vertical-align: middle;
+}
+
+#pageintel-settingsModal {
+  overflow-y: auto;
+}
+
+#pageintel-aiPrompt {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+#pageintel-aiResponse {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.pageintel-collapsible {
+  cursor: pointer;
+  padding: 18px;
+  width: 100%;
+  border: none;
+  text-align: left;
+  outline: none;
+  font-size: 15px;
+}
+
+.pageintel-active,
+.pageintel-collapsible:hover {
+  background-color: #ccc;
+}
+
+.pageintel-content {
+  padding: 0 18px;
+  display: none;
+  overflow: hidden;
+  background-color: #f1f1f1;
+}
+
+.pageintel-validation-section {
+  padding: 20px;
+  background-color: #f5f5f5;
+  border-radius: 8px;
+}
+
+.pageintel-validation-section h2 {
+  font-size: 24px;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.pageintel-validation-container {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.pageintel-validation-container label {
+  font-size: 16px;
+  margin-right: 10px;
+  color: #555;
+}
+
+.pageintel-task-select {
+  padding: 8px 32px 8px 12px;
+  font-size: 16px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  background-color: #fff;
+  flex-grow: 1;
+  margin-right: 10px;
+  color: #333;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007CB2%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E');
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 8px auto;
+  height: 40px;
+  line-height: 24px;
+}
+
+
+.pageintel-result-container {
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #333;
+}
+
+.pageintel-task-item {
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  border-bottom: 1px solid #ccc;
+}
+
+.pageintel-task-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.pageintel-task-title {
+  flex-grow: 1;
+}
+
+.pageintel-task-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.pageintel-task-details {
+  padding: 10px;
+  background-color: #f0f0f0;
+  border-radius: 4px;
+}
+
+.pageintel-task-item input[type="checkbox"] {
+  margin-right: 10px;
+}
+
+
+.pageintel-toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 4px;
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+  z-index: 9999;
+}
+
+.pageintel-toast-show {
+  opacity: 1;
+}
+
+#password-dialog {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+#password-dialog-content {
+  background-color: white;
+  padding: 20px;
+  border-radius: 5px;
+  text-align: center;
+}
+
+#entered-password {
+  margin: 10px 0;
+  padding: 5px;
+}
+
+#password-modal {
+  display: none;
+  position: fixed;
+  z-index: 1;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+#password-modal .modal-content {
+  background-color: #fefefe;
+  margin: 15% auto;
+  padding: 20px;
+  border: 1px solid #888;
+  width: 300px;
+}
+
+.password-input-container {
+  display: flex;  /* Aligns children (input and button) in a row */
+  align-items: center;  /* Centers children vertically */
+  gap: 8px;  /* Adds space between children */
+}
+
+.password-toggle {
+  border: none;  /* Removes any default border */
+  background: none;  /* Removes any default background */
+  cursor: pointer;  /* Makes it clear that the icon is clickable */
+  padding: 5px;  /* Adds padding around the icon for easier clicking */
+}
+
+.password-toggle .material-icons {
+  font-size: 24px;  /* Ensures the icon is of appropriate size */
+}S
+
+#tag-selector {
+  width: 100%;
+  resize: vertical;
+  font-family: monospace;
+  font-size: 14px;
+  line-height: 1.4;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+  white-space: pre;
+  overflow-wrap: normal;
+  overflow-x: auto;
+}
+
+#tag-management {
+  margin-bottom: 20px;
+}
+
+#tag-management label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+#tag-management textarea {
+  margin-bottom: 10px;
+}
+
+/* Add this to your style.css or inline styles */
+.error {
+  color: red;
+  font-weight: bold;
+}
+
+.pageintel-task-details {
+  display: none;
+  margin-top: 10px;
+  padding: 10px;
+  background-color: #f0f0f0;
+  border-radius: 4px;
+}
+
+
+.task-details-container {
+  margin-top: 10px;
+  padding: 10px;
+  background-color: #f0f0f0;
+  border-radius: 4px;
+}
+
+.task-details-container {
+  display: none;
+}
+
+.task-details-container.show {
+  display: block;
+}
+
+.pageintel-task-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pageintel-task-title {
+  flex-grow: 1;
+}
+
+.pageintel-task-actions {
+  display: flex;
+  gap: 10px; /* Adjust the space between the icons as needed */
+}
+
+
+/* When 'show' class is added, this will override the 'display: none' and show the details */
+.pageintel-task-details.show {
+  display: block !important;
+}
+
+.pageintel-task-item {
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+
+.pageintel-task-item:hover {
+  background-color: #f5f5f5;
+}
+
+.pageintel-task-title {
+  font-size: 14px;
+  font-weight: normal;
+  color: #333;
+}
+
+.pageintel-task-status {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: bold;
+  margin-left: 10px;
+}
+
+.pageintel-task-status-success {
+  background-color: #4caf50;
+  color: #ffffff;
+}
+
+.pageintel-task-status-warning {
+  background-color: #ff9800;
+  color: #ffffff;
+}
+
+.pageintel-task-details {
+  margin-top: 10px;
+  padding: 15px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+}
+
+.pageintel-task-details p {
+  margin: 5px 0;
+}
+
+.pageintel-task-item:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.pageintel-task-item:not(:last-child) {
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.pageintel-view-task {
+  color: #2196f3;
+}
+
+.pageintel-validate-task {
+  color: #4caf50;
+}
+
+.pageintel-view-task,
+.pageintel-validate-task {
+  cursor: pointer;
+}
+
+div#task-list {
+  padding: inherit;
+}
+
+#import-settings-container {
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+#import-settings-container h4 {
+  margin-top: 0;
+}
+
+#import-settings-container div {
+  margin-bottom: 10px;
+}
+
+#import-settings-container label {
+  display: inline-block;
+  margin-bottom: 5px;
+}
+
+#import-settings-container select {
+  margin-left: 10px;
+}
+
+.pageintel-task-spinner {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid #ccc;
+  border-top-color: #333;
+  animation: pageintel-task-spin 1s linear infinite;
+}
+
+@keyframes pageintel-task-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+} 
+
+.modal-dialog {
+  display: none; /* Hidden by default */
+  position: fixed; /* Stay in place */
+  z-index: 1000; /* Sit on top */
+  left: 0;
+  top: 0;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  overflow: auto; /* Enable scroll if needed */
+  background-color: rgba(0,0,0,0.5); /* Black w/ opacity */
+}
+
+.modal-content {
+  background-color: #fefefe;
+  margin: 15% auto; /* 15% from the top and centered */
+  padding: 20px;
+  border: 1px solid #888;
+  width: 80%; /* Could be more or less, depending on screen size */
+}

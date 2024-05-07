@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Settings Panel</title>
+  <link rel="stylesheet" type="text/css" href="style.css">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+
+<body>
+
+
+  <!-- The Modal -->
+  <div id="pageintel-settingsModal" class="pageintel-modal">
+    <div class="pageintel-modal-content">
+      <div id="pageintel-firstTimeAlert"
+        style="display:none; position:absolute; top:0; left:0; right:0; background-color:rgba(0,0,0,0.9); color:white; padding:20px; text-align:center; z-index:100;">
+        <h1>Welcome to PageIntel by MaxTaf!</h1>
+        <p>Before you start, you need to enter your API key. PageIntel requires this key to function properly as it
+          powers all the tasks you can perform with this extension.</p>
+        <input type="text" id="api-key-input" placeholder="Enter your API Key here" style="margin-top: 10px;">
+        <button id="activate-button">Activate</button>
+        <button id="skip-button" style="margin-top: 10px;">Proceed without API Key</button>
+        <p style="color: yellow; margin-top: 10px;">Proceed without an API key if you plan to import settings later or
+          know how to configure the extension manually.</p>
+      </div>
+
+
+      <span class="pageintel-close">&times;</span>
+      <h2>Settings</h2>
+
+      <!-- Settings Section -->
+      <div id="general-settings">
+        <h3 class="pageintel-collapsible">General</h3>
+        <div class="pageintel-content">
+          <div>
+            <button id="export-settings">Export Settings</button>
+            <button id="import-settings-toggle">Import Settings</button>
+          </div>
+
+          <!-- ... other parts of your HTML ... -->
+
+          <div id="import-settings-container" style="display: none;">
+            <h4>Import Settings</h4>
+            <div>
+              <label>
+                <!-- <input type="radio" id="import-from-file-radio" name="import-source" value="file"> -->
+                <input type="radio" id="import-settings-file-radio" name="import-source" value="file" checked>
+
+                Import from File
+              </label>
+              <input type="file" id="import-settings-file" accept=".json" style="display: none;">
+            </div>
+            <div>
+              <label>
+                <!-- <input type="radio" id="import-from-url-radio" name="import-source" value="url"> -->
+                <input type="radio" id="import-settings-url-radio" name="import-source" value="url">
+                Import from URL
+              </label>
+              <input type="text" id="import-settings-url" class="pageintel-input-text" placeholder="Enter URL"
+                style="display: none;">
+            </div>
+            <div>
+              <label>Import Mode:</label>
+              <select id="import-mode-select">
+                <option value="merge">Merge with existing settings</option>
+                <option value="overwrite">Overwrite existing settings</option>
+              </select>
+            </div>
+            <button id="import-settings-submit">Import</button>
+            <button id="import-settings-cancel">Cancel</button>
+          </div>
+
+
+
+          <label for="pageintel-display-in-popup"
+            title="Enable this option to display validation results in a separate message box. Uncheck to show results in the side panel.">Show
+            validation results in a message box:</label>
+          <input type="checkbox" id="pageintel-display-in-popup" class="pageintel-input-checkbox" checked>
+
+          <div>
+            <label for="settings-password">Settings Password (optional):</label>
+            <div class="password-input-container">
+              <input type="password" id="settings-password" name="settings-password">
+              <button class="password-toggle" data-target="settings-password">
+                <i class="material-icons">visibility</i>
+              </button>
+              <button id="save-password">Save Password</button>
+            </div>
+          </div>
+
+          <br />
+          <div>
+            <label for="model-select">Choose a model:</label>
+            <select id="model-select" class="pageintel-select">
+              <option value="gpt-3.5-turbo">GPT-3.5-Turbo</option>
+              <option value="gpt-4-turbo">GPT-4-Turbo</option>
+            </select>
+          </div>
+          <div>
+            <label for="api-url">AI API URL:</label>
+            <input type="text" id="api-url" class="pageintel-input-text" placeholder="Enter API URL">
+          </div>
+          <div>
+            <label for="api-key">AI API Key:</label>
+            <input type="text" id="api-key" class="pageintel-input-text" placeholder="Enter API Key">
+          </div>
+        </div>
+      </div>
+
+      <!-- Validation Tasks Management Section -->
+      <div id="tasks-management">
+        <h3 class="pageintel-collapsible">AI Tasks</h3>
+        <div class="pageintel-content">
+          <select id="existing-tasks" class="pageintel-select">
+            <!-- Existing tasks will be populated here -->
+          </select>
+
+          <!-- Delete Task Button with Bin Icon -->
+          <button id="delete-task" class="material-icons" title="Delete AI Task">delete</button>
+
+          <!-- Add New Task Button -->
+          <button id="add-new-task" class="material-icons" title="Add New AI Task">add_circle_outline</button>
+          <p></p>
+          <input type="hidden" id="original-task-title">
+          <label for="task-title">AI Task Title:</label><br class="pageintel-br" />
+          <input type="text" id="task-title" class="pageintel-input-text" placeholder="Enter Task Title"><br
+            class="pageintel-br" />
+          <label for="task-description">Task Description:</label><br class="pageintel-br" />
+          <textarea id="task-description" rows="3"></textarea>
+          <div>
+            <label for="task-urls">Page URLs (comma-separated, wildcards allowed):</label><br class="pageintel-br" />
+            <input type="text" id="task-urls" class="pageintel-input-text" placeholder="Enter Page URLs"><br
+              class="pageintel-br" />
+          </div>
+          <label for="pageintel-new-validation-tasks">AI Task:</label>
+          <small>Press Ctrl+Space to insert a tag into your task.</small>
+          <textarea id="pageintel-new-validation-tasks" placeholder="Enter AI Task"></textarea><br
+            class="pageintel-br" />
+          <div id="task-confirmation-dialog" class="modal-dialog" style="display: none;">
+            <div class="modal-content">
+              <p>You have unsaved changes. Are you sure you want to proceed without saving?</p>
+              <button id="tag-confirm-yes">Yes</button>
+              <button id="tag-confirm-no">No</button>
+            </div>
+          </div>
+          <button id="save-task" style="display: none;">Save Task</button>
+          <button id="settings-validate-button">Test this AI Task</button>
+          <div id="aiInteractionContainer" style="display: none;">
+            <span class="pageintel-close" id="clear-ai-interaction">&times;</span>
+            <h4>Prompt:</h4>
+            <div id="pageintel-aiPrompt"></div>
+            <h4>Response:</h4>
+            <div id="pageintel-aiResponse"></div>
+          </div>
+
+        </div>
+      </div>
+      <div id="data-tags">
+        <h3 class="pageintel-collapsible">Data Tags</h3>
+        <div class="pageintel-content">
+          <!-- Existing tags dropdown -->
+          <select id="existing-tags" class="pageintel-select">
+            <!-- Existing tags will be populated here -->
+          </select>
+
+          <!-- Delete Tag Button with Bin Icon -->
+          <button id="delete-tag" class="material-icons" title="Delete Tag">delete</button>
+
+          <!-- Add New Tag Button -->
+          <button id="add-new-tag" class="material-icons" title="Add New Tag">add_circle_outline</button>
+          <p></p>
+          <input type="hidden" id="original-tag-name">
+          <label for="tag-name">Tag Name:</label><br />
+          <input type="text" id="tag-name" class="pageintel-input-text" placeholder="Enter Tag Name"><br />
+          <label for="tag-description">Tag Description:</label><br />
+          <input type="text" id="tag-description" class="pageintel-input-text"
+            placeholder="Enter Tag Description"><br />
+          <label for="tag-selector">CSS Selector / JSON:</label><br />
+          <textarea id="tag-selector" rows="6" placeholder="Enter CSS Selector or JSON"
+            class="language-json"></textarea><br />
+          <button id="save-tag">Save Tag</button><br /><br />
+
+          <button id="test-tag">Test Tag</button><br /><br />
+          <div id="test-tag-result">
+            <span class="pageintel-close" id="close-test-tag-result">&times;</span>
+            <div id="test-result-content"><!-- Your test result content goes here --></div>
+          </div>
+
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <div id="tag-confirmation-dialog" class="modal-dialog">
+    <div class="modal-content">
+      <p>You have unsaved changes. Are you sure you want to proceed without saving?</p>
+      <button id="tag-confirm-yes">Yes</button>
+      <button id="tag-confirm-no">No</button>
+    </div>
+  </div>
+  
+  <!-- Validation Section -->
+  <div class="pageintel-validation-section">
+
+    <img src="icons/settings_FILL0_wght400_GRAD0_opsz24.svg" class="pageintel-settings-icon" alt="Settings">
+    <div id="task-list" class="pageintel-task-list">
+      <!-- Task items will be dynamically added here -->
+    </div>
+    <br />
+    <div id="pageintel-result" class="pageintel-result-container"></div>
+  </div>
+
+  <!-- 
+<div id="password-dialog" style="display: none;">
+  <div id="password-dialog-content">
+    <h3>Enter Settings Password</h3>
+    <input type="password" id="entered-password">
+    <button id="submit-password">Submit</button>
+    <button id="cancel-password">Cancel</button>
+  </div>
+</div>
+ -->
+
+  <div id="password-modal" class="modal">
+    <div class="modal-content">
+      <h2>Enter Settings Password</h2>
+      <div class="password-input-container">
+        <input type="password" id="password-input">
+        <button class="password-toggle" data-target="password-input">
+          <i class="material-icons">visibility</i>
+        </button>
+      </div>
+      <button id="password-submit">Submit</button>
+      <button id="password-cancel">Cancel</button>
+    </div>
+  </div>
+
+  <script src="settings.js" type="module"></script>
+  <script src="tagManagement.js" type="module"></script>
+  <script src="taskManagement.js" type="module"></script>
+  <script src="panel.js" type="module"></script>
+  <script src="generalTags.js" type="module"></script>
+</body>
+
+</html>

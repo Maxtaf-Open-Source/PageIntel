@@ -1,0 +1,12 @@
+node_modules/
+dist/
+*.zip
+bkp/
+rubbish/
+*.log
+*.log
+*.tmp
+.DS_Store
+dist_old/
+maximo-validatior.code-workspace
+manifest.zip
