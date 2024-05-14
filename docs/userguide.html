@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PageIntel by MaxTaf - Complete User Guide</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Add click event listener to navigation links
+            $('.nav-link').on('click', function (e) {
+
+                // Show the corresponding content section based on the clicked link
+
+                var target = $(this).attr('href');
+                $(target).show();
+            });
+        });
+    </script>
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            padding: 20px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+        }
+
+        h2 {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .sidebar {
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+            padding: 20px;
+            overflow-x: hidden;
+            overflow-y: auto;
+            border-right: 1px solid #eee;
+            background-color: #f8f9fa;
+        }
+
+        .sidebar .nav-link {
+            font-weight: 600;
+            color: #333;
+            padding: 0.5rem 1rem;
+        }
+
+        .sidebar .nav-link.active {
+            color: #007bff;
+        }
+
+        .content {
+            padding: 20px;
+            margin-left: 220px;
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+
+        .content p {
+            margin-bottom: 1rem;
+        }
+
+        .content ul,
+        .content ol {
+            margin-bottom: 1.5rem;
+        }
+
+        .content li {
+            margin-bottom: 0.5rem;
+        }
+
+        .content code {
+            font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            font-size: 0.9rem;
+            color: #333;
+            background-color: #f0f0f0;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+        }
+
+        .content pre {
+            margin-bottom: 1.5rem;
+        }
+
+        .content pre code {
+            font-size: 0.9rem;
+            display: block;
+            padding: 1rem;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <nav class="col-md-2 d-none d-md-block bg-light sidebar">
+                <div class="sidebar-sticky">
+                    <h1>PageIntel User Guide</h1>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#quickStartSection">Quick Start</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#mainSectionMenu">Main Section & Menu</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#aiTasksSection">AI Tasks</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#dataTagsSection">Data Tags</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#advancedFeaturesSection">Advanced Features</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#aiKeyUrlSection">AI Key & AI URL</a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4 content">
+                <!-- Quick Start Section -->
+                <div id="quickStartSection">
+                    <h2>Quick Start Guide</h2>
+                    <p>This Quick Start guide is designed to get you up and running with PageIntel immediately after
+                        installation.</p>
+                    <p>PageIntel is a powerful Chrome extension that allows you to extract and analyze web content based
+                        on your specific needs. This quick start guide will help you get up and running with PageIntel
+                        in no time.</p>
+
+                    <h3>Step 1: Obtain an API Key</h3>
+                    <p>To use PageIntel, you need to obtain an API key from OpenAI. Follow these steps:</p>
+                    <ol>
+                        <li>Visit the <a href="https://openai.com" target="_blank">OpenAI website</a> and sign up for an
+                            account.</li>
+                        <li>Navigate to the API section and generate a new API key.</li>
+                        <li>Copy the API key to your clipboard.</li>
+                    </ol>
+
+                    <h3>Step 2: Configure PageIntel</h3>
+                    <p>Open the PageIntel extension and follow these steps to configure it:</p>
+                    <ol>
+                        <li>Click on the PageIntel icon in your browser's toolbar to open the extension.</li>
+                        <li>In the settings area, paste your OpenAI API key into the designated field.</li>
+                        <li>Customize other settings according to your preferences, such as the AI model and display
+                            options.</li>
+                        <li>Click the "Save" button to apply your changes.</li>
+                    </ol>
+
+                    <h3>Step 3: Create Custom Tasks</h3>
+                    <p>PageIntel allows you to create custom tasks to extract and analyze data from web pages. Here's
+                        how:</p>
+                    <ol>
+                        <li>In the PageIntel extension, navigate to the "Custom Tasks" section.</li>
+                        <li>Click the "Add New Task" button to create a new custom task.</li>
+                        <li>Provide a name and description for your task.</li>
+                        <li>Define the task using the available data tags and custom logic. For example:
+                            <code>{page-title} - {page-url}</code>
+                        </li>
+                        <li>Save your custom task.</li>
+                    </ol>
+
+                    <h3>Step 4: Use Data Tags</h3>
+                    <p>Data tags are placeholders that you can use within your custom tasks to refer to specific
+                        elements or data points on a web page. PageIntel provides a set of predefined data tags, such as
+                        <code>{page-title}</code>, <code>{page-url}</code>, and <code>{selection}</code>.
+                    </p>
+                    <p>You can also create your own custom data tags by defining CSS selectors or JSON paths in the
+                        "Data Tags" section of the extension.</p>
+
+                    <h3>Step 5: Run Custom Tasks</h3>
+                    <p>To run a custom task, follow these steps:</p>
+                    <ol>
+                        <li>Navigate to a web page where you want to extract or analyze data.</li>
+                        <li>Open the PageIntel extension.</li>
+                        <li>Select the desired custom task from the dropdown menu.</li>
+                        <li>Click the "Run Task" button to execute the task.</li>
+                        <li>View the results in the extension's output area.</li>
+                    </ol>
+
+                    <h3>Step 6: Explore Advanced Features</h3>
+                    <p>PageIntel offers several advanced features to enhance your experience:</p>
+                    <ul>
+                        <li>Customize the AI model for better results.</li>
+                        <li>Enable or disable the display of results in a popup window.</li>
+                        <li>Use the keyboard shortcut <code>Ctrl+Shift+P</code> to quickly open PageIntel.</li>
+                        <li>Access the extension's options page for more granular control over settings.</li>
+                    </ul>
+
+                    <p>That's it! You're now ready to use PageIntel to supercharge your web browsing experience. If you
+                        have any questions or need further assistance, please refer to our <a href="#">documentation</a>
+                        or contact our support team.</p>
+
+                    <p>Happy browsing with PageIntel!</p>
+                </div>
+                
+                <!-- Main Section and Main Menu -->
+                <div id="mainSectionMenu">
+                    <h2>Main Section and Main Menu</h2>
+                    <p>The main section of the PageIntel extension provides a convenient way for you to interact with
+                        predefined tasks and ask impromptu questions. This section is designed to streamline your
+                        workflow and make it easy for you to execute tasks and get answers to your queries.</p>
+
+                    <h3>Running Predefined Tasks</h3>
+                    <p>PageIntel comes with a set of predefined tasks that you can execute with just a click. These
+                        tasks are displayed in the main section as a list of task items. To run a task, simply locate
+                        the desired task in the list and click on the "play" icon (▶) associated with it. PageIntel will
+                        then execute the task and display the results in the designated output area.</p>
+
+                    <h3>Asking Impromptu Questions</h3>
+                    <p>In addition to predefined tasks, PageIntel allows you to ask impromptu questions directly from
+                        the main section. At the top of the task list, there is a dedicated input field where you can
+                        type your questions. Simply enter your question into this field and press Enter or click on the
+                        "play" icon (▶) to execute the query. PageIntel will process the question and provide a response
+                        based on its AI capabilities.</p>
+
+                    <h3>Saving Impromptu Questions as Tasks</h3>
+                    <p>If you find yourself frequently asking similar questions or if you want to save an impromptu
+                        question for future use, PageIntel provides the ability for you to save these questions as
+                        predefined tasks. After entering a question and receiving a satisfactory response, click on the
+                        "save" icon (💾) next to the question input field. You will be prompted to enter a name for the
+                        task. Once saved, the question will appear in the task list as a new predefined task.</p>
+                    <p>To further refine the saved task, you can go to the settings panel by clicking on the gear icon
+                        (⚙) in the main menu. In the settings panel, locate the newly saved task and click on it to
+                        expand its details. Here, you can add a description for the task, specifying its purpose or any
+                        additional information. Additionally, you can define the applicable URLs where the task should
+                        be available. This allows you to limit the task's visibility to specific web pages or domains.
+                    </p>
+
+                    <h3>Task Filtering</h3>
+                    <p>As you accumulate more predefined tasks, the task list in the main section can become lengthy. To
+                        help you quickly find the desired task, PageIntel provides a task filtering feature. In the main
+                        menu, located at the top of the main section, you will find a search icon (🔍). Clicking on this
+                        icon will reveal an input field where you can enter keywords or phrases to filter the task list.
+                        As you type, the task list will dynamically update to show only the tasks that match your search
+                        query. To clear the filter and display all tasks again, click on the clear icon (❌) next to the
+                        filter input field.</p>
+                    <p>The main section and main menu of PageIntel provide a user-friendly interface for you to execute
+                        predefined tasks, ask impromptu questions, and manage your saved tasks. With the ability to save
+                        questions as tasks, refine them in the settings panel, and filter the task list, PageIntel
+                        empowers you to streamline your workflow and quickly access the information you need.</p>
+                </div>
+                <!-- ... remaining content ... -->
+
+                <!-- AI Tasks Section -->
+                <div id="aiTasksSection">
+                    <h2>AI Tasks: The Core of PageIntel</h2>
+                    <p>AI Tasks are the foundational element of PageIntel, centralizing the extension's capabilities to
+                        automate and enhance user interactions with web content using artificial intelligence.</p>
+                    <p>AI Tasks are the foundational element of PageIntel, centralizing the extension's capabilities to
+                        automate and enhance user interactions with web content using artificial intelligence. These
+                        tasks are designed to simplify complex processes, from data extraction to content analysis, by
+                        intelligently processing web page data.</p>
+
+                    <h3>How AI Tasks Work</h3>
+                    <p>The workflow of AI Tasks in PageIntel is a systematic process that integrates data extraction
+                        with AI processing:</p>
+                    <ol>
+                        <li><strong>Task Definition</strong>: Users define AI Tasks using a specific prompt structure
+                            that may include placeholders for data tags.</li>
+                        <li><strong>Data Tag Execution</strong>: When an AI Task is triggered, PageIntel first
+                            identifies the data tags embedded within the task prompt. These tags are used to extract
+                            specific data elements from the current web page.</li>
+                        <li><strong>Data Replacement</strong>: Extracted data replaces the corresponding data tags in
+                            the AI Task prompt, transforming it into a complete query ready for processing.</li>
+                        <li><strong>AI Processing</strong>: The fully formed query is sent to an AI model, which
+                            processes the information and generates a response based on the input.</li>
+                        <li><strong>Response Display</strong>: The AI's response is then displayed back to the user,
+                            providing insights, summaries, or any other requested analysis.</li>
+                    </ol>
+
+                    <h3>Writing Effective AI Task Prompts</h3>
+                    <p>Writing effective prompts for AI Tasks is crucial for achieving accurate and relevant AI
+                        responses. The prompts should be clear and direct, with properly placed data tags to ensure
+                        precise data extraction. Here are some tips and examples for prompt writing:</p>
+                    <ul>
+                        <li><strong>Be Specific</strong>: Clearly state what the AI needs to do with the data once
+                            extracted. The more specific the prompt, the more accurate the AI's response.</li>
+                        <li><strong>Use Data Tags Wisely</strong>: Place data tags where the extracted data will be most
+                            meaningful for the AI's processing.</li>
+                        <li><strong>Context Matters</strong>: Provide enough context in the prompt to guide the AI's
+                            response in the right direction.</li>
+                    </ul>
+                    <p>Example prompts include:</p>
+                    <ul>
+                        <li><strong>Price Comparison Task</strong>: "Compare the current price of {product-name} at
+                            {product-price} with historical prices and advise if it's a good time to buy."</li>
+                        <li><strong>Content Summary Task</strong>: "Summarize the key points from the following article:
+                            {page-full-content}."</li>
+                    </ul>
+
+                    <h3>URL Filters and Wildcards in AI Tasks</h3>
+                    <p>URL filters in PageIntel define the scope of web pages where AI Tasks will be activated, allowing
+                        for targeted application of tasks to relevant content. The flexibility of URL filters is crucial
+                        for ensuring that tasks operate efficiently and only when necessary.</p>
+                    <ul>
+                        <li><strong>Blank Filters</strong>: If no URL filter is specified, the AI Task will be
+                            considered applicable to all pages. It is important that such a task is general enough to be
+                            relevant across different webpages.</li>
+                        <li><strong>Single and Multiple Filters</strong>: Users can specify single or multiple URL
+                            filters to narrow down the task's applicability. For example, a price monitoring AI Task
+                            might be set to trigger on URLs like <code>*amazon.com/products*</code>,
+                            <code>*ebay.com/offers*</code>.
+                        </li>
+                        <li><strong>Use of Wildcards</strong>: Wildcards (<code>*</code>) allow flexibility in matching
+                            URL patterns, enabling the task to be triggered on broader URL patterns such as
+                            <code>*.newswebsite.com/*</code> which would cover all subdomains of
+                            <code>newswebsite.com</code>.
+                        </li>
+                        <li><strong>Cross-Domain Filters</strong>: For tasks that require data from multiple sources,
+                            URL filters can span different domains, such as <code>*cnn.com/news*</code>,
+                            <code>*bbc.com/news*</code> to compare news coverage on similar topics across different news
+                            websites.
+                        </li>
+                    </ul>
+
+                    <p>By using URL filters effectively, users can ensure that AI Tasks are triggered only under
+                        appropriate conditions, maximizing the extension's utility and performance across varied web
+                        environments. This selective activation helps conserve resources and ensures that the output
+                        from AI Tasks is as relevant and useful as possible.</p>
+                </div>
+
+                <!-- Data Tags Section -->
+                <div id="dataTagsSection">
+                    <h2>Data Tags in PageIntel</h2>
+                    <p>Data tags allow you to define and extract specific data elements from web pages automatically,
+                        enhancing your ability to automate and streamline data collection tasks.</p>
+                    <p>PageIntel's data tags are a core feature that allow users to define and extract specific data
+                        elements from web pages automatically. This feature enhances the ability to automate and
+                        streamline data collection tasks tailored to your specific needs.</p>
+
+                    <h3>Overview of Data Tags</h3>
+                    <p>Data tags in PageIntel act as identifiers for specific data within a web page. These can be
+                        anything from simple elements like page titles or URLs to more complex data such as prices or
+                        specific text blocks within an article.</p>
+
+                    <h3>Creating Data Tags</h3>
+                    <ol>
+                        <li><strong>Access the Data Tags Panel</strong>: Open the PageIntel settings and navigate to the
+                            Data Tags section.</li>
+                        <li><strong>Add a New Tag</strong>: Click the "Add New Tag" button to start defining a new data
+                            tag.</li>
+                        <li><strong>Define the Tag</strong>:
+                            <ul>
+                                <li><strong>Tag Name</strong>: Enter a unique name for the data tag.</li>
+                                <li><strong>Tag Description</strong>: Provide a brief description of what the tag is
+                                    used for.</li>
+                                <li><strong>CSS Selector/JSON</strong>: Enter the CSS selector or JSON path that defines
+                                    where to extract the data from the page.</li>
+                            </ul>
+                        </li>
+                        <li><strong>Save the Tag</strong>: Click the "Save Tag" button to store the tag in your
+                            extension settings.</li>
+                    </ol>
+
+                    <h3>Using Data Tags</h3>
+                    <p>Once a tag is created, it can be utilized in various tasks throughout the extension. For example:
+                    </p>
+                    <ul>
+                        <li><strong>Automated Scraping</strong>: Automatically extract and save the data specified by
+                            the tag when visiting a web page.</li>
+                        <li><strong>Data Analysis</strong>: Use the tag to gather specific types of data for analysis,
+                            such as extracting all product prices from an e-commerce site.</li>
+                        <li><strong>Task Automation</strong>: Incorporate tags into custom tasks to process or monitor
+                            specific information on web pages.</li>
+                    </ul>
+                    <h3>Testing and Validation</h3>
+                    <p>Before fully implementing a new data tag, it is important to test its functionality:</p>
+                    <ol>
+                        <li><strong>Select the Tag</strong>: In the Data Tags section, select the tag you wish to test.
+                        </li>
+                        <li><strong>Test the Tag</strong>: Click the "Test Tag" button to execute the tag on the current
+                            page.</li>
+                        <li><strong>Review the Output</strong>: Ensure that the tag correctly captures the data as
+                            expected.</li>
+                    </ol>
+
+                    <h3>Advanced Data Tagging: CSS Selectors and JSON Paths</h3>
+
+                    <h4>CSS Selectors</h4>
+                    <p>CSS selectors are patterns used to select the elements you want to style in a webpage. In
+                        PageIntel, you use CSS selectors to define which elements to extract data from. Examples include
+                        simple selectors like <code>div</code>, <code>#header</code>, or <code>.price</code>, and
+                        combinator selectors like <code>div > p</code> which selects all <code>&lt;p&gt;</code> elements
+                        that are direct children of a <code>&lt;div&gt;</code>.</p>
+
+                    <h4>JSON Paths for Advanced Tagging</h4>
+                    <p>For more complex structures such as iframes or shadow DOMs, JSON paths are used. These provide a
+                        structured way to navigate through nested elements or across different document contexts like
+                        iframes or shadow DOMs.</p>
+                    <pre><code>{
+                    "selectors": [
+                        {
+                            "iframe_path": ["iframe#main", "iframe#content"],
+                            "shadow_dom_path": ["div#shadowHost", "shadowRoot"],
+                            "element_selector": "p.price"
+                        }
+                    ]
+                }</code></pre>
+                    <p>This JSON path configuration allows navigation into nested iframes, through shadow DOMs, and
+                        directly to the elements of interest, such as <code>p.price</code>.</p>
+
+                    <h4>Use Cases for JSON Paths</h4>
+                    <p>Example use case includes extracting product prices from an e-commerce platform where product
+                        details are loaded within an iframe and prices are displayed within shadow DOMs:</p>
+                    <pre><code>{
+                    "selectors": [
+                        {
+                            "iframe_path": ["iframe#productFrame"],
+                            "shadow_dom_path": ["div#productDetails", "shadowRoot"],
+                            "element_selector": "span.price"
+                        }
+                    ]
+                }</code></pre>
+
+                    <h4>Testing and Validation</h4>
+                    <p>Set up the tag with the appropriate JSON path or CSS selector, test it on a relevant page, and
+                        check the results to ensure accurate data extraction.</p>
+
+                    <p>By effectively using data tags, PageIntel users can tailor the extension to meet their precise
+                        data collection and monitoring requirements, making web interactions more efficient and
+                        productive.</p>
+                    <h3>Built-In Data Tags in PageIntel</h3>
+
+                    <p>PageIntel includes a set of built-in data tags that provide essential functionality for capturing
+                        common types of data from web pages without the need for custom configuration. These tags are
+                        pre-defined within the extension and are ready to use immediately for various data extraction
+                        tasks.</p>
+
+                    <h3>Overview of Built-In Tags</h3>
+                    <p>Built-in tags in PageIntel are designed to simplify common data extraction tasks by providing
+                        predefined selectors and handlers. These tags target standard web page elements and attributes,
+                        such as page titles, URLs, and more.</p>
+
+                    <h4>List of Built-In Data Tags</h4>
+                    <p>Here are some of the most commonly used built-in data tags provided by PageIntel:</p>
+                    <ul>
+                        <li><strong>page-title</strong>: Captures the title of the current web page.
+                            <ul>
+                                <li><em>Handler</em>: Returns the content of the <code>&lt;title&gt;</code> tag from the
+                                    HTML document.</li>
+                            </ul>
+                        </li>
+                        <li><strong>page-url</strong>: Captures the URL of the current web page.
+                            <ul>
+                                <li><em>Handler</em>: Returns the full URL from the browser's address bar.</li>
+                            </ul>
+                        </li>
+                        <li><strong>page-input-data</strong>: Extracts data from input fields within the web page.
+                            <ul>
+                                <li><em>Handler</em>: Collects values from all input elements like text boxes,
+                                    checkboxes, and radio buttons.</li>
+                                <li><em>Output</em>: Returns a JSON string containing details such as input names,
+                                    types, values, and associated labels.</li>
+                            </ul>
+                        </li>
+                        <li><strong>page-full-content</strong>: Captures all readable text from the web page, excluding
+                            scripts, styles, and media elements.
+                            <ul>
+                                <li><em>Handler</em>: Iteratively collects text content from visible elements,
+                                    navigating through nested structures including iframes and shadow DOMs.</li>
+                            </ul>
+                        </li>
+                    </ul>
+
+                    <h4>Using Built-In Data Tags</h4>
+                    <p>To utilize built-in data tags in PageIntel:</p>
+                    <ol>
+                        <li><strong>Access Data Tags Section</strong>: Open the settings or tag management panel in
+                            PageIntel.</li>
+                        <li><strong>Select a Built-In Tag</strong>: Choose a tag from the list of built-in tags. These
+                            are usually marked with a special notation or different color to distinguish them from
+                            custom tags.</li>
+                        <li><strong>Apply the Tag</strong>: Use the tag in tasks such as data scraping, monitoring, or
+                            analysis. Built-in tags can be integrated into workflows just like custom tags.</li>
+                    </ol>
+
+                    <h4>Advantages of Built-In Data Tags</h4>
+                    <ul>
+                        <li><strong>Ease of Use</strong>: No setup or configuration is required to start using built-in
+                            tags.</li>
+                        <li><strong>Reliability</strong>: These tags are tested extensively to ensure they perform well
+                            across a wide range of websites.</li>
+                        <li><strong>Efficiency</strong>: Speed up the development of data collection tasks by using
+                            pre-defined, commonly needed data selectors.</li>
+                    </ul>
+
+                    <h4>Example Use Case</h4>
+                    <p>Imagine you are conducting market research and need to extract the titles and URLs from a list of
+                        blog posts on a news site. By using the <code>page-title</code> and <code>page-url</code>
+                        built-in tags, you can quickly set up a task in PageIntel to scrape this information from each
+                        page visited, storing the results for later analysis or reporting.</p>
+
+                    <p>Built-in data tags are a powerful feature of PageIntel, enabling both novice and advanced users
+                        to perform complex data extraction tasks with minimal effort. Whether you are tracking price
+                        changes, analyzing article content, or gathering metadata from web pages, these tags provide a
+                        solid foundation for your data extraction needs.</p>
+                </div>
+
+                <!-- Advanced Features Section -->
+                <div id="advancedFeaturesSection">
+                    <h2>Advanced Settings</h2>
+                    <p>Explore the advanced settings of PageIntel, including Import/Export facilities, AI model
+                        selection, and more.</p>
+                    <h3>Import/Export Facilities</h3>
+
+                    <p>PageIntel provides robust options for importing and exporting settings and configurations,
+                        allowing users to easily backup their settings or transfer them to another installation.</p>
+
+                    <h4>Exporting Settings</h4>
+                    <ol>
+                        <li><strong>Navigate to the Settings Panel</strong>: Access the settings panel from the
+                            PageIntel interface.</li>
+                        <li><strong>Export Settings</strong>: Click on the "Export Settings" button. This will generate
+                            a JSON file containing all your customized settings, tasks, and data tags.</li>
+                        <li><strong>Download the File</strong>: The JSON file will be automatically downloaded to your
+                            default downloads folder.</li>
+                    </ol>
+                    <p>The exported settings include all custom configurations such as API keys, model selections, task
+                        definitions, and data tag setups.</p>
+
+                    <h4>Importing Settings</h4>
+                    <ol>
+                        <li><strong>Open the Settings Panel</strong>: Access this panel through the main PageIntel
+                            interface.</li>
+                        <li><strong>Choose Import Source</strong>:
+                            <ul>
+                                <li><strong>File</strong>: Select "Import from File" if you have a JSON settings file.
+                                    Click the file input area to select and upload the file from your local system.</li>
+                                <li><strong>URL</strong>: Select "Import from URL" if the settings are hosted online.
+                                    Enter the URL where the JSON file is located.</li>
+                            </ul>
+                        </li>
+                        <li><strong>Select Import Mode</strong>: Choose whether to "Merge with existing settings" or
+                            "Overwrite existing settings". Merging will combine the imported settings with the existing
+                            ones, while overwriting will replace all current settings with those imported.</li>
+                        <li><strong>Execute the Import</strong>: Click the "Import" button to apply the imported
+                            settings.</li>
+                    </ol>
+                    <p>The import process is designed to be straightforward and user-friendly, with clear options for
+                        managing how incoming settings are integrated with existing configurations.</p>
+                    <p>By utilizing these features, PageIntel users can ensure that their configurations are preserved
+                        across different installations or easily shared with colleagues, enhancing the utility and
+                        flexibility of their setup.</p>
+
+
+                    <h3 id="additional-features">Additional Features</h3>
+                    <ul>
+                        <li><strong>Password Protection</strong>: Set a password for accessing the settings panel to
+                            prevent unauthorized changes.</li>
+                        <li><strong>API Model Selection</strong>: Choose between different AI models (e.g.,
+                            GPT-3.5-Turbo or GPT-4-Turbo) for processing tasks.</li>
+                    </ul>
+                </div>
+
+                <!-- AI Key and AI URL Configuration Section -->
+                <div id="aiKeyUrlSection">
+                    <h2>AI Key and AI URL Configuration</h2>
+                    <p>Learn how to configure the AI Key and AI URL to enhance the flexibility and security of AI tasks
+                        in PageIntel.</p>
+                    <p>The configuration of the AI Key and AI URL in PageIntel is a crucial aspect that enhances the
+                        flexibility and security of how AI tasks are handled within the extension. This setup not only
+                        allows for seamless integration with enterprise systems but also supports advanced
+                        customizations and secure data handling.</p>
+
+                    <h3>AI Key Configuration</h3>
+                    <p>The AI Key is a critical component in PageIntel, enabling the extension to authenticate and
+                        interact with AI services. This key is typically used to authorize API calls made to AI services
+                        like OpenAI or any other large language models (LLMs) that the extension might communicate with.
+                    </p>
+                    <ul>
+                        <li><strong>Security</strong>: The AI Key is securely stored and managed within the user's
+                            PageIntel setup, ensuring that sensitive credentials are kept safe from unauthorized access.
+                        </li>
+                        <li><strong>Ease of Use</strong>: Users can easily enter and update their AI Key through the
+                            PageIntel settings panel, allowing for straightforward configuration and maintenance.</li>
+                    </ul>
+
+                    <h3>AI URL Configuration</h3>
+                    <p>The AI URL configuration plays a vital role in how PageIntel interacts with different AI
+                        services. By allowing the AI URL to be configurable, PageIntel can support advanced setups, such
+                        as routing API calls through an API gateway.</p>
+                    <ul>
+                        <li><strong>Enterprise Integration</strong>: In an enterprise setup, the API call can be made to
+                            an API gateway instead of directly to an AI service. This gateway can reformat the API
+                            calls, potentially routing them to different AI services based on the needs and policies of
+                            the enterprise.</li>
+                        <li><strong>User Authentication</strong>: The API gateway can handle user authentication via
+                            Single Sign-On (SSO) or other authentication methods. This ensures that AI interactions
+                            comply with the enterprise's security standards and that user credentials are managed
+                            securely.</li>
+                        <li><strong>Key Management</strong>: The API gateway can manage the AI Key, meaning that the
+                            actual AI service key does not need to be stored within the user's PageIntel setup. This
+                            adds an extra layer of security, as the sensitive AI Key is managed and protected by the
+                            gateway, reducing the risk of exposure.</li>
+                        <li><strong>Flexibility and Customization</strong>: Organizations can customize the AI URL to
+                            point to different endpoints depending on specific requirements, such as load balancing,
+                            failover strategies, or specific data handling rules that comply with local regulations.
+                        </li>
+                    </ul>
+                    <p>The default entry for the AI URL is the OpenAI API URL, as this is likely the most common use
+                        case. The API call is made in the format required by OpenAI. If the target LLM uses a different
+                        format, the message can be translated to their format by the API gateway.</p>
+
+                    <h3>Implementation Considerations</h3>
+                    <p>When configuring the AI URL and AI Key in PageIntel, consider the following:</p>
+                    <ul>
+                        <li><strong>Compliance and Security</strong>: Ensure that the configuration adheres to your
+                            organization's IT security policies and compliance requirements.</li>
+                        <li><strong>Testing and Validation</strong>: Before fully implementing these settings in a
+                            production environment, conduct thorough testing to verify that the AI tasks perform as
+                            expected and that all security measures are robust.</li>
+                        <li><strong>Documentation and Support</strong>: Maintain detailed documentation of the
+                            configuration settings and ensure that technical support is available to address potential
+                            issues during setup or operation.</li>
+                    </ul>
+
+                    <p>By leveraging the flexibility of configurable AI URLs and secure AI Key management, PageIntel can
+                        effectively meet the diverse needs of individual users and organizations, enhancing the security
+                        and efficiency of AI-driven tasks.</p>
+                </div>
+            </main>
+        </div>
+    </div>
