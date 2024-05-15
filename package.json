@@ -11,7 +11,7 @@
     "version": "node update-version.js && git add .",
     "preversion": "npm run build",
     "postversion": "git push && git push --tags",
-    "pack": "npm run build && mkdir -p releases && zip -r releases/pageintel-$(npm pkg get version | tr -d '\"').zip dist/ manifest.json icons/"
+    "pack": "npm run build && mkdir -p releases && zip -r releases/pageintel-$(npm pkg get version | tr -d '\"').zip dist/ icons/ manifest.json"
   },
   "keywords": [],
   "author": "",
