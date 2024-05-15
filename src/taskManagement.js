@@ -40,6 +40,7 @@ function populateFieldsFromSelectedTask() {
       document.getElementById('pageintel-new-validation-tasks').value = tasks[selectedTitle].task || '';
       document.getElementById('original-task-title').value = selectedTitle;
       document.getElementById('task-urls').value = storedPageUrls[selectedTitle] || '';
+      document.getElementById('task-pinned').checked = tasks[selectedTitle].pinned || false;
     }
   });
 }
@@ -75,15 +76,18 @@ function saveTask() {
 
     tasks[title] = {
       description: description,
-      task: task
+      task: task,
+      pinned: isPinned
     };
     storedPageUrls[title] = pageUrls;
 
     chrome.storage.sync.set({ tasks, pageUrls: storedPageUrls }, function () {
-      console.log('Task auto-saved');
+      console.log('Task saved');
       loadAllTasks(function () {
         syncDropdowns(title);
         loadTasks();
+        document.getElementById('save-task').style.display = 'none';
+        taskChanged = false;
       });
     });
   });
@@ -100,11 +104,31 @@ document.getElementById('existing-tasks').addEventListener('focus', function () 
 }, true);
 
 
-
+function updateTaskPinnedStatus(taskTitle, isPinned) {
+  chrome.storage.sync.get(['tasks'], function (items) {
+    const tasks = items.tasks || {};
+    if (tasks[taskTitle]) {
+      tasks[taskTitle].pinned = isPinned;
+      chrome.storage.sync.set({ tasks }, function () {
+        loadTasks();  // Reload tasks to reflect changes
+      });
+    }
+  });
+}
 
 
 // Setup event listeners for task management
 function setupTaskEventListeners() {
+
+  document.addEventListener('click', function (event) {
+    if (event.target.classList.contains('pageintel-pin-checkbox')) {
+      const taskTitle = event.target.getAttribute('data-task');
+      const isPinned = event.target.checked;
+      updateTaskPinnedStatus(taskTitle, isPinned);
+    }
+  });
+
+
   document.getElementById('existing-tasks').addEventListener('focus', function () {
     this.setAttribute('data-original-value', this.value);
   }, true);
@@ -132,6 +156,26 @@ function setupTaskEventListeners() {
   });
 
   document.getElementById('save-task').addEventListener('click', saveTask);
+
+  document.addEventListener('click', function (event) {
+    if (event.target.classList.contains('pageintel-validate-task')) {
+      chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+        var currentTab = tabs[0];
+        if (!isHTMLPage(currentTab.url)) {
+          displayToastMessage("This type of page cannot be processed.");
+          return;
+        }
+        var taskTitle = event.target.dataset.task;
+        if (taskTitle === 'user-question') {
+          processUserQuestion();
+        } else {
+          showSpinner(taskTitle);
+          processTask(taskTitle);
+        }
+      });
+    }
+  });
+
 
   document.getElementById('add-new-task').addEventListener('click', function () {
     document.getElementById('task-title').value = '';
@@ -161,6 +205,10 @@ function setupTaskEventListeners() {
     taskChanged = true;
     showSaveTaskButton();
   });
+  document.getElementById('task-pinned').addEventListener('change', function () {
+    taskChanged = true;
+    showSaveTaskButton();
+  });
 
   // Add event listener for the "Save Task" button
   document.getElementById('save-task').addEventListener('click', saveTask);
@@ -177,6 +225,7 @@ function setupTaskEventListeners() {
     var task = document.getElementById('pageintel-new-validation-tasks').value;
     var originalTitle = document.getElementById('original-task-title').value;
     var pageUrls = document.getElementById('task-urls').value;
+    var isPinned = document.getElementById('task-pinned').checked;
 
     if (!title) {
       alert('Task title cannot be empty');
@@ -195,7 +244,8 @@ function setupTaskEventListeners() {
 
       tasks[title] = {
         description: description,
-        task: task
+        task: task,
+        pinned: isPinned 
       };
       storedPageUrls[title] = pageUrls;
 
@@ -289,29 +339,31 @@ function setupTaskEventListeners() {
   });
 
 
+  var userQuestionTextarea = document.getElementById('user-question');
+  userQuestionTextarea.addEventListener('input', function () {
+    this.style.height = 'auto';
+    this.style.height = (this.scrollHeight) + 'px';
+  });
 
-
-  document.addEventListener('click', function (event) {
-
-    if (event.target.classList.contains('pageintel-validate-task')) {
-      chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-        var currentTab = tabs[0];
-        if (!isHTMLPage(currentTab.url)) {
-          displayToastMessage("This type of page cannot be processed.");
-          return;
-        }
-        var taskTitle = event.target.dataset.task;
-        showSpinner();  // Show spinner before starting the task processing.
-        processTask(taskTitle);
-
-      });
+  userQuestionTextarea.addEventListener('keydown', function (event) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      var playIcon = this.closest('.pageintel-task-item').querySelector('.pageintel-validate-task');
+      playIcon.click();
     }
+  });
 
+  var clearTextIcon = document.querySelector('.pageintel-clear-text');
+  clearTextIcon.addEventListener('click', function () {
+    userQuestionTextarea.value = '';
+    userQuestionTextarea.style.height = 'auto';
   });
 
 }
 
 async function processTask(taskTitle) {
+
+
   try {
     const items = await chrome.storage.sync.get(['tasks']);
     const tasks = items.tasks || {};
@@ -485,7 +537,7 @@ function displayResult(response, isTestTaskButton = false) {
 
           // Add event listener to the copy button
           document.getElementById('pageintel-copy-result').addEventListener('click', function () {
-            copyToClipboard(aiResponse);
+            copyToClipboard(response);
             showCopyMessage();
           });
 
@@ -497,7 +549,7 @@ function displayResult(response, isTestTaskButton = false) {
         }
       } else {
         chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-          chrome.tabs.sendMessage(tabs[0].id, { action: 'displayResults', result: aiResponse });
+          chrome.tabs.sendMessage(tabs[0].id, { action: 'displayResults', result: response });
         });
       }
     });
@@ -622,6 +674,50 @@ function hideSpinner(taskTitle) {
   }
 }
 
+function processUserQuestion() {
+  const userQuestion = document.getElementById('user-question').value;
+  if (userQuestion.trim() === '') {
+    displayToastMessage("Please enter a question.");
+    return;
+  }
 
+  chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+    var currentTab = tabs[0];
+    if (!isHTMLPage(currentTab.url)) {
+      displayToastMessage("This type of page cannot be processed.");
+      return;
+    }
+
+    showSpinner('user-question');
+    var resultContainer = document.getElementById('pageintel-result');
+    resultContainer.style.display = 'none';
+
+    const modifiedTask = addPageContentToQuestion(userQuestion);
+    collectAndInsertData({ task: modifiedTask })
+      .then(modifiedTask => {
+        sendDataToOpenAI(modifiedTask.task, 'user-question', false);
+      })
+      .catch(error => {
+        console.log('An error occurred:', error);
+        hideSpinner('user-question');
+
+        if (error.message.includes("Data tag")) {
+          displayResult(`Error: ${error.message}`, false);
+        } else if (error.message.includes("The extension script has not been loaded")) {
+          displayResult(`Error: ${error.message}`, false);
+        } else {
+          displayResult(`Error: An error occured. Please try again.`, false);
+        }
+      });
+  });
+}
+
+function addPageContentToQuestion(question) {
+  const regex = /(?<!\\)\{([^}]+)\}/g;
+  if (!regex.test(question)) {
+    return `${question}\n\nContent: {page-full-content}`;
+  }
+  return question;
+}
 // Export necessary functions
-export { loadAllTasks, setupTaskEventListeners, loadTasks };
+export { loadAllTasks, setupTaskEventListeners, loadTasks, addPageContentToQuestion };

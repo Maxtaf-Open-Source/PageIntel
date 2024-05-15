@@ -32,8 +32,8 @@ module.exports = (env, argv) => {
     plugins: [
       new CopyPlugin({
         patterns: [
+          { from: 'manifest.json', to: '.' }, 
           { from: 'src/panel.html', to: 'panel.html' },
-          { from: 'src/externalScript.js', to: 'externalScript.js' },
           { from: 'src/style.css', to: 'style.css' },
           { from: 'src/settings.js', to: 'settings.js' },
           { from: 'icons', to: 'icons' },

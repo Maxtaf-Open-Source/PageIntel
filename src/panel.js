@@ -1,13 +1,14 @@
 // panel.js
 
 import { loadAllTags, setupTagEventListeners } from './tagManagement.js';
-import { loadAllTasks, setupTaskEventListeners } from './taskManagement.js';
+import { loadAllTasks, setupTaskEventListeners, addPageContentToQuestion } from './taskManagement.js';
 import { loadSettings, saveSettings, exportSettings, importSettings } from './settings.js';
 import { generalTags } from './generalTags.js';
 //import { fetchOpenAI } from './api.js';
 
 // Show settings modal
 function showSettingsModal() {
+  loadSettings(); // Ensure settings are loaded when the modal is shown
   document.getElementById('pageintel-settingsModal').style.display = 'block';
   document.body.classList.add('pageintel-modal-open');
 }
@@ -37,28 +38,30 @@ function verifyApiKey() {
   };
 
   // Send message to background.js
-  chrome.runtime.sendMessage(validationData, function(response) {
+  chrome.runtime.sendMessage(validationData, function (response) {
     if (response.error) {
       console.log('Validation failed:', response.error);
       alert('API Key validation failed: ' + response.error.message);
     } else {
-      console.log('API Key is valid!');
-      chrome.storage.sync.set({ apiKey: apiKey }, function () {
-        console.log('API Key saved and verified');
-
-        closeSettingsModal(); // Close the settings modal
-        alert("Your API key is activated! You can start using the extension. \n\nWe've included some predefined tasks for you to try, but we encourage you to create your own in the settings area. \n\n Just for this first time, please reload any open pages before running tasks to ensure everything works smoothly.");
-        chrome.storage.sync.set({ firstTime: false }, function () {
-          console.log('The settings modal has been shown on first use.');
-        });
-        document.getElementById('pageintel-firstTimeAlert').style.display = 'none'; // Show the first-time alert
-
+      chrome.storage.sync.set({ apiKey: apiKey, apiKeySet: true }, function () {
+        alert("Your API key is activated! You can start using the extension.");
+        closeSettingsModal();
+        document.getElementById('pageintel-firstTimeAlert').style.display = 'none';
+        loadSettings(); // Reload settings to ensure the API key is populated
       });
     }
   });
 }
 
 
+function checkApiKeyAndShowModal() {
+  chrome.storage.sync.get(['apiKeySet'], function (items) {
+    if (!items.apiKeySet) {
+      showSettingsModal();
+      document.getElementById('pageintel-firstTimeAlert').style.display = 'block';
+    }
+  });
+}
 
 // Save password to storage
 document.getElementById('save-password').addEventListener('click', function () {
@@ -102,12 +105,92 @@ function loadTasks(callback) {
 
       var taskList = document.getElementById('task-list');
       taskList.innerHTML = ''; // Clear previous task items
+      // Add the user question input at the top of the task list
+      var userQuestionItem = document.createElement('div');
+      userQuestionItem.className = 'pageintel-task-item pageintel-user-question';
+      userQuestionItem.innerHTML = `
+             <div class="pageintel-task-header">
+               <div style="position: relative; flex-grow: 1;">
+                 <textarea id="user-question" placeholder="Ask a question..." style="width: 100%; border: none; border-bottom: 1px solid #ccc; background-color: #f5f5f5;  padding: 5px 30px 5px 5px;; outline: none; resize: none; overflow: hidden; box-sizing: border-box;"></textarea>
+                 <i class="material-icons pageintel-clear-text" style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); cursor: pointer;">close</i>
+               </div>
+               <div class="pageintel-task-actions">
+                 <i class="material-icons pageintel-save-task" data-task="user-question">save</i>
+                 <i class="material-icons pageintel-validate-task" data-task="user-question">play_arrow</i>
+               </div>
+             </div>
+           `;
 
+      var userQuestionTextarea = userQuestionItem.querySelector('#user-question');
+      userQuestionTextarea.addEventListener('input', function () {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
+      });
+
+      userQuestionTextarea.addEventListener('keydown', function (event) {
+        if (event.key === 'Enter' && !event.shiftKey) {
+          event.preventDefault();
+          var playIcon = userQuestionItem.querySelector('.pageintel-validate-task');
+          playIcon.click();
+        }
+      });
+
+      var saveTaskIcon = userQuestionItem.querySelector('.pageintel-save-task');
+      saveTaskIcon.addEventListener('click', function () {
+        var userQuestion = addPageContentToQuestion(userQuestionTextarea.value);
+
+        var taskName = prompt('Enter a name for the task:');
+        if (taskName) {
+          chrome.storage.sync.get(['tasks'], function (items) {
+            var tasks = items.tasks || {};
+            tasks[taskName] = {
+              description: 'User-defined task',
+              task: userQuestion
+            };
+            chrome.storage.sync.set({ tasks: tasks }, function () {
+              loadAllTasks(function () {
+                loadTasks();
+              });
+            });
+          });
+        }
+      });
+
+      var clearTextIcon = userQuestionItem.querySelector('.pageintel-clear-text');
+      clearTextIcon.addEventListener('click', function () {
+        userQuestionTextarea.value = '';
+        userQuestionTextarea.style.height = 'auto';
+      });
+      // Adjust the height of the textarea based on its content
+      var userQuestionTextarea = userQuestionItem.querySelector('#user-question');
+      userQuestionTextarea.addEventListener('input', function () {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
+      });
+
+      taskList.appendChild(userQuestionItem);
+
+      var sortedTasks = [];
+      var pinnedTasks = [];
+      var normalTasks = [];
+      
       for (var title in tasks) {
+        if (tasks[title].pinned) {
+          pinnedTasks.push({ title: title, ...tasks[title] });
+        } else {
+          normalTasks.push({ title: title, ...tasks[title] });
+        }
+      }
+      
+      // Combine arrays: pinned tasks first, then normal tasks
+      sortedTasks = pinnedTasks.concat(normalTasks);
+      
+      sortedTasks.forEach(function(task) {
+        var title = task.title;
         var pageUrls = storedPageUrls[title] || '';
         console.log('Task Title:', title);
         console.log('Page URLs for Task:', pageUrls);
-
+      
         if (pageUrls === '' || pageUrls.split(',').some(url => {
           var matchResult = matchUrlWildcard(currentPageUrl, url.trim());
           console.log('Matching URL:', url.trim());
@@ -128,6 +211,11 @@ function loadTasks(callback) {
             <div class="pageintel-task-details" style="display: none;">
               <p><b>Description</b>: ${tasks[title].description || 'No description available'}</p>
               <p><b>Prompt</b>: ${tasks[title].task || 'No prompt available'}</p>
+              <label class="pageintel-pin-label">
+                Pin this task to the top: <input type="checkbox" class="pageintel-pin-checkbox" ${tasks[title].pinned ? 'checked' : ''} data-task="${title}">
+              </label>
+
+
             </div>
           `;
           taskList.appendChild(taskItem);
@@ -151,7 +239,8 @@ function loadTasks(callback) {
             });
           });
         }
-      }
+      });
+
 
       if (callback && typeof callback === 'function') {
         callback();
@@ -159,6 +248,75 @@ function loadTasks(callback) {
     });
   });
 }
+
+const taskList = document.getElementById('task-list');
+
+taskList.addEventListener('focus', function (event) {
+  this.style.overflowY = 'auto';
+}, true); // Use capture to detect focus events on children too
+
+taskList.addEventListener('blur', function (event) {
+  this.style.overflowY = 'hidden';
+}, true);
+
+let filterInput = document.querySelector('.pageintel-filter-input');
+let clearFilterIcon = document.querySelector('.pageintel-clear-filter-icon');
+let filterIcon = document.querySelector('.pageintel-filter-icon');
+
+filterInput.addEventListener('input', function () {
+  const filterText = this.value.toLowerCase();
+  const taskItems = document.querySelectorAll('.pageintel-task-item:not(.pageintel-user-question)');
+
+
+  taskItems.forEach(function (taskItem) {
+    const taskTitle = taskItem.querySelector('.pageintel-task-title').textContent.toLowerCase();
+
+    if (taskTitle.includes(filterText)) {
+      taskItem.style.display = 'block';
+    } else {
+      taskItem.style.display = 'none';
+    }
+  });
+});
+
+
+document.addEventListener('DOMContentLoaded', function () {
+  let filterContainer = document.querySelector('.pageintel-filter-container');
+  let filterIcon = document.querySelector('.pageintel-filter-icon');
+  let clearFilterIcon = document.querySelector('.pageintel-clear-filter-icon');
+  let filterInput = document.querySelector('.pageintel-filter-input');
+
+  filterIcon.addEventListener('click', function () {
+    filterContainer.style.display = 'flex';
+    filterIcon.style.display = 'none';
+    filterInput.focus();
+  });
+
+  clearFilterIcon.addEventListener('click', function () {
+    filterInput.value = '';
+    const taskItems = document.querySelectorAll('.pageintel-task-item');
+    taskItems.forEach(function (taskItem) {
+      taskItem.style.display = 'block';
+    });
+    filterContainer.style.display = 'none';
+    filterIcon.style.display = 'inline-block';
+  });
+
+  filterInput.addEventListener('input', function () {
+    const filterText = this.value.toLowerCase();
+    const taskItems = document.querySelectorAll('.pageintel-task-item:not(.pageintel-user-question)');
+
+    taskItems.forEach(function (taskItem) {
+      const taskTitle = taskItem.querySelector('.pageintel-task-title').textContent.toLowerCase();
+
+      if (taskTitle.includes(filterText)) {
+        taskItem.style.display = 'block';
+      } else {
+        taskItem.style.display = 'none';
+      }
+    });
+  });
+});
 
 chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
   if (changeInfo.status === 'complete' && tab.active) {
@@ -178,26 +336,7 @@ document.addEventListener('DOMContentLoaded', function () {
   loadTasks();
   setupTagEventListeners();
   initializeImportSettingsUI();
-
-  chrome.storage.sync.get(['firstTime'], function (items) {
-    if (items.firstTime === undefined || items.firstTime === true) {
-      showSettingsModal(); // Open the settings modal
-      document.getElementById('pageintel-firstTimeAlert').style.display = 'block'; // Show the first-time alert
-      chrome.storage.sync.set({ firstTime: false }, function () {
-        console.log('The settings modal has been shown on first use.');
-      });
-    }
-  });
-  
-
-
-  chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
-    if (changeInfo.status === 'complete' && tab.active) {
-      loadTasks();
-    }
-  });
-
-
+  checkApiKeyAndShowModal(); // Check the flag and show the modal if needed
 
   var coll = document.getElementsByClassName("pageintel-collapsible");
   for (var i = 0; i < coll.length; i++) {
@@ -207,6 +346,7 @@ document.addEventListener('DOMContentLoaded', function () {
       content.style.display = content.style.display === "block" ? "none" : "block";
     });
   }
+
 
   toggleResultVisibility();
   setupTaskEventListeners();
@@ -419,7 +559,20 @@ document.getElementById('model-select').addEventListener('change', saveSettings)
 document.getElementById('pageintel-display-in-popup').addEventListener('change', saveSettings);
 document.getElementById('api-url').addEventListener('input', saveSettings);
 
+// Close settings modal
 document.querySelector('.pageintel-close').addEventListener('click', closeSettingsModal);
+
+// User guide icon click event
+document.querySelector('.pageintel-user-guide-icon').addEventListener('click', function () {
+  window.open('https://maxtaf-open-source.github.io/PageIntel/docs/userguide.html', '_blank');
+});
+
+  // Event listener for user guide icon in main panel
+  document.querySelector('.pageintel-main-menu .pageintel-user-guide-icon').addEventListener('click', function () {
+    window.open('https://maxtaf-open-source.github.io/PageIntel/docs/userguide.html', '_blank');
+  });
+
+
 document.getElementById('pageintel-display-in-popup').addEventListener('change', function () {
   chrome.storage.sync.set({ displayInPopup: this.checked }, function () {
     console.log('Show popup setting saved');
@@ -445,13 +598,13 @@ document.querySelectorAll('input[name="import-source"]').forEach(function (radio
   });
 });
 
-document.getElementById('skip-button').addEventListener('click', function() {
+document.getElementById('skip-button').addEventListener('click', function () {
   document.getElementById('pageintel-firstTimeAlert').style.display = 'none';
   showSettingsModal();
   chrome.storage.sync.set({ firstTime: false }, function () {
     console.log('The settings modal has been shown on first use.');
   });
-  document.getElementById('pageintel-firstTimeAlert').style.display = 'none'; 
+  document.getElementById('pageintel-firstTimeAlert').style.display = 'none';
   alert("You've chosen to proceed without an API key. Please go to the settings to configure your API key or import settings at any time.");
 });
 

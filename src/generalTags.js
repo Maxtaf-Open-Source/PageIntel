@@ -70,6 +70,25 @@ function handleGeneralTag(tagName) {
 
 function getFullContent(node) {
     let content = '';
+    // Check if the current page is a PDF
+    if (document.body.classList.contains('pdf-viewer')) {
+      // Get the content of the PDF page
+      const pdfContent = document.querySelector('.textLayer').textContent;
+      return pdfContent.trim();
+    }
+  
+    // Check if the current page is a Google Sheet or Google Doc
+    if (window.location.hostname === 'docs.google.com') {
+      if (window.location.pathname.startsWith('/spreadsheets/')) {
+        // Get the content of the Google Sheet
+        const sheetContent = document.querySelector('.grid-container').textContent;
+        return sheetContent.trim();
+      } else if (window.location.pathname.startsWith('/document/')) {
+        // Get the content of the Google Doc
+        const docContent = document.querySelector('.kix-page-content-wrapper').textContent;
+        return docContent.trim();
+      }
+    }
   
     // Check if the node is visible
     if (isNodeVisible(node)) {

@@ -7,7 +7,7 @@ import { loadAllTags } from './tagManagement.js'; // Add this import
 
 // Load settings when the panel is opened
 function loadSettings() {
-  chrome.storage.sync.get(['displayInPopup', 'apiKey', 'model', 'apiUrl'], function (items) {
+  chrome.storage.sync.get(['displayInPopup', 'apiKey', 'model', 'apiUrl','settingsPassword'], function (items) {
     document.getElementById('pageintel-display-in-popup').checked = items.displayInPopup !== false;
     document.getElementById('api-key').value = items.apiKey || '';
     document.getElementById('model-select').value = items.model || 'gpt-4';
@@ -64,75 +64,82 @@ function exportSettings() {
 
 
 // Import settings
+// Import settings
 async function importSettings(event, mode, url = null) {
   let settings;
 
-  if (url) {
-    // Fetch settings from the provided URL
-    try {
+  try {
+    if (url) {
+      // Fetch settings from the provided URL
       const response = await fetch(url);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       settings = await response.json();
-    } catch (error) {
-      console.log('Error fetching settings from URL:', error);
-      alert('Failed to import settings from URL. Please check the URL and try again.');
-      return;
-    }
-  } else {
-    // Import settings from the selected file
-    const file = event.target.files[0];
-    if (!file) return;
+    } else {
+      // Import settings from the selected file
+      const file = event.target.files[0];
+      if (!file) throw new Error("No file selected.");
 
-    const reader = new FileReader();
-    settings = await new Promise((resolve, reject) => {
-      reader.onload = (e) => resolve(JSON.parse(e.target.result));
-      reader.onerror = (e) => reject(e);
-      reader.readAsText(file);
-    });
-  }
-
-  if (mode === 'overwrite') {
-    // Overwrite existing settings with imported settings
-    chrome.storage.sync.set(settings, function () {
-      console.log('Settings imported and overwritten successfully');
-      // Reload settings and UI elements as necessary
-      loadAllTasks();
-      loadAllTags();
-      loadSettings();
-    });
-  } else if (mode === 'merge') {
-    // Merge imported settings with existing settings
-    chrome.storage.sync.get(['tasks', 'apiKey', 'model', 'displayInPopup', 'pageUrls', 'dataTags'], function (existingSettings) {
-      const mergedSettings = {
-        tasks: {
-          ...existingSettings.tasks,
-          ...settings.tasks
-        },
-        apiKey: settings.apiKey || existingSettings.apiKey,
-        model: settings.model || existingSettings.model || 'gpt-4',
-        displayInPopup: settings.displayInPopup !== undefined ? settings.displayInPopup : existingSettings.displayInPopup !== false,
-        pageUrls: {
-          ...existingSettings.pageUrls,
-          ...settings.pageUrls
-        },
-        dataTags: {
-          ...existingSettings.dataTags,
-          ...settings.dataTags
-        }
-      };
-
-      chrome.storage.sync.set(mergedSettings, function () {
-        console.log('Settings imported and merged successfully');
-        // Reload settings and UI elements as necessary
-        loadAllTasks();
-        loadAllTags();
-        loadSettings();
+      settings = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            resolve(JSON.parse(e.target.result));
+          } catch (error) {
+            reject(new Error(`Invalid JSON in file: ${error.message}`));
+          }
+        };
+        reader.onerror = (e) => reject(e);
+        reader.readAsText(file);
       });
-    });
+    }
+
+    if (mode === 'overwrite') {
+      chrome.storage.sync.set(settings, async function () {
+        console.log('Settings imported and overwritten successfully');
+        await loadAllTasks();
+        await loadAllTags();
+        loadSettings();
+
+        // Calculate and display how many tasks and tags were imported
+        const tasksCount = Object.keys(settings.tasks || {}).length;
+        const tagsCount = Object.keys(settings.dataTags || {}).length;
+        alert(`Import successful! ${tasksCount} tasks and ${tagsCount} tags have been imported.`);
+        loadTasks();
+      });
+    } else if (mode === 'merge') {
+      chrome.storage.sync.get(['tasks', 'dataTags', 'apiKey', 'model', 'displayInPopup', 'pageUrls'], function (existingSettings) {
+        const mergedSettings = {
+          tasks: { ...existingSettings.tasks, ...settings.tasks },
+          dataTags: { ...existingSettings.dataTags, ...settings.dataTags },
+          apiKey: settings.apiKey || existingSettings.apiKey,
+          model: settings.model || existingSettings.model,
+          displayInPopup: settings.displayInPopup !== undefined ? settings.displayInPopup : existingSettings.displayInPopup,
+          pageUrls: { ...existingSettings.pageUrls, ...settings.pageUrls }
+        };
+
+        chrome.storage.sync.set(mergedSettings, async function () {
+          console.log('Settings imported and merged successfully');
+          await loadAllTasks();
+          await loadAllTags();
+          loadSettings();
+
+          // Calculate and display how many tasks and tags were merged
+          const tasksCount = Object.keys(mergedSettings.tasks).length;
+          const tagsCount = Object.keys(mergedSettings.dataTags).length;
+          alert(`Import successful! Merged ${tasksCount} tasks and ${tagsCount} tags.`);
+          loadTasks();
+        });
+      });
+    }
+  } catch (error) {
+    console.log('Import failed:', error);
+    alert(`Failed to import settings: ${error.message}`);
   }
+
 }
+
 
 // Export necessary functions
 export { loadSettings, saveSettings, exportSettings, importSettings };
