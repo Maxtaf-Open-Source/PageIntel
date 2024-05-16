@@ -135,7 +135,7 @@ select.pageintel-select {
   direction: ltr;
   -webkit-font-feature-settings: 'liga';
   -webkit-font-smoothing: antialiased;
-  color: #4285F4;
+  color: #299ED9;
 }
 
 
@@ -515,13 +515,14 @@ input[type="checkbox"].pageintel-input-checkbox {
   border-bottom: 1px solid #e0e0e0;
 } */
 
-.pageintel-view-task {
-  color: #2196f3;
-}
+/* .pageintel-view-task {
+  color: #299ED9;
+} */
 
 .pageintel-validate-task {
-  color: #4caf50;
+  color: #7AC1BB;
 }
+
 
 .pageintel-view-task,
 .pageintel-validate-task {

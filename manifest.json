@@ -10,9 +10,7 @@
   },
   "permissions": [
     "activeTab",
-    "scripting",
     "storage",
-    "tabs",
     "sidePanel"
   ],
   "host_permissions": [
@@ -31,7 +29,7 @@
   "content_scripts": [
     {
       "matches": [
-        "<all_urls>"
+        "<all_urls>" 
       ],
       "css": [
         "dist/style.css"
