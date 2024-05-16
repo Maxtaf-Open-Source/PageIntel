@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "PageIntel by MaxTAF",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "PageIntel connects ChatGPT to the browser to execute your AI tasks based on the webpage content.",
   "icons": {
     "16": "icons/PageIntel_Brandmark_10 1.png",
@@ -29,7 +29,7 @@
   "content_scripts": [
     {
       "matches": [
-        "<all_urls>" 
+        "<all_urls>"
       ],
       "css": [
         "dist/style.css"
