@@ -11,3 +11,6 @@ dist_old/
 maximo-validatior.code-workspace
 manifest.zip
 releases/
+concatFilesOutput.txt
+concatFiles.js
+concatFilesConfig.json

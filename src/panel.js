@@ -86,166 +86,152 @@ function matchUrlWildcard(url, pattern) {
 
 function loadTasks(callback) {
   chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+      var currentTab = tabs[0];
+      var currentPageUrl = currentTab.url;
 
-    var currentTab = tabs[0];
-    var currentPageUrl = currentTab.url;
-    console.log('Current Page URL:', currentPageUrl);
+      chrome.storage.sync.get(['tasks', 'pageUrls'], function (items) {
+          var tasks = items.tasks || {};
+          var storedPageUrls = items.pageUrls || {};
 
-    chrome.storage.sync.get(['tasks', 'pageUrls'], function (items) {
+          var taskList = document.getElementById('task-list');
+          taskList.innerHTML = '';
 
-      console.log("Loaded tasks from storage:", items.tasks);
-      if (!items.tasks) {
-        console.log("No tasks found in sync storage.");
-      }
-
-      var tasks = items.tasks || {};
-      var storedPageUrls = items.pageUrls || {};
-      console.log('Stored Validation Tasks:', tasks);
-      console.log('Stored Page URLs:', storedPageUrls);
-
-      var taskList = document.getElementById('task-list');
-      taskList.innerHTML = ''; // Clear previous task items
-      // Add the user question input at the top of the task list
-      var userQuestionItem = document.createElement('div');
-      userQuestionItem.className = 'pageintel-task-item pageintel-user-question';
-      userQuestionItem.innerHTML = `
-             <div class="pageintel-task-header">
-               <div style="position: relative; flex-grow: 1;">
-                 <textarea id="user-question" placeholder="Ask a question..." style="width: 100%; border: none; border-bottom: 1px solid #ccc; background-color: #f5f5f5;  padding: 5px 30px 5px 5px;; outline: none; resize: none; overflow: hidden; box-sizing: border-box;"></textarea>
-                 <i class="material-icons pageintel-clear-text" style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); cursor: pointer;">close</i>
-               </div>
-               <div class="pageintel-task-actions">
-                 <i class="material-icons pageintel-save-task" data-task="user-question">save</i>
-                 <i class="material-icons pageintel-validate-task" data-task="user-question">play_arrow</i>
-               </div>
-             </div>
-           `;
-
-      var userQuestionTextarea = userQuestionItem.querySelector('#user-question');
-      userQuestionTextarea.addEventListener('input', function () {
-        this.style.height = 'auto';
-        this.style.height = (this.scrollHeight) + 'px';
-      });
-
-      userQuestionTextarea.addEventListener('keydown', function (event) {
-        if (event.key === 'Enter' && !event.shiftKey) {
-          event.preventDefault();
-          var playIcon = userQuestionItem.querySelector('.pageintel-validate-task');
-          playIcon.click();
-        }
-      });
-
-      var saveTaskIcon = userQuestionItem.querySelector('.pageintel-save-task');
-      saveTaskIcon.addEventListener('click', function () {
-        var userQuestion = addPageContentToQuestion(userQuestionTextarea.value);
-
-        var taskName = prompt('Enter a name for the task:');
-        if (taskName) {
-          chrome.storage.sync.get(['tasks'], function (items) {
-            var tasks = items.tasks || {};
-            tasks[taskName] = {
-              description: 'User-defined task',
-              task: userQuestion
-            };
-            chrome.storage.sync.set({ tasks: tasks }, function () {
-              loadAllTasks(function () {
-                loadTasks();
-              });
-            });
-          });
-        }
-      });
-
-      var clearTextIcon = userQuestionItem.querySelector('.pageintel-clear-text');
-      clearTextIcon.addEventListener('click', function () {
-        userQuestionTextarea.value = '';
-        userQuestionTextarea.style.height = 'auto';
-      });
-      // Adjust the height of the textarea based on its content
-      var userQuestionTextarea = userQuestionItem.querySelector('#user-question');
-      userQuestionTextarea.addEventListener('input', function () {
-        this.style.height = 'auto';
-        this.style.height = (this.scrollHeight) + 'px';
-      });
-
-      taskList.appendChild(userQuestionItem);
-
-      var sortedTasks = [];
-      var pinnedTasks = [];
-      var normalTasks = [];
-      
-      for (var title in tasks) {
-        if (tasks[title].pinned) {
-          pinnedTasks.push({ title: title, ...tasks[title] });
-        } else {
-          normalTasks.push({ title: title, ...tasks[title] });
-        }
-      }
-      
-      // Combine arrays: pinned tasks first, then normal tasks
-      sortedTasks = pinnedTasks.concat(normalTasks);
-      
-      sortedTasks.forEach(function(task) {
-        var title = task.title;
-        var pageUrls = storedPageUrls[title] || '';
-        console.log('Task Title:', title);
-        console.log('Page URLs for Task:', pageUrls);
-      
-        if (pageUrls === '' || pageUrls.split(',').some(url => {
-          var matchResult = matchUrlWildcard(currentPageUrl, url.trim());
-          console.log('Matching URL:', url.trim());
-          console.log('Match Result:', matchResult);
-          return matchResult;
-        })) {
-          var taskItem = document.createElement('div');
-          taskItem.className = 'pageintel-task-item';
-          taskItem.innerHTML = `
-            <div class="pageintel-task-header">
-              <span class="pageintel-task-title">${title}</span>
-              <div class="pageintel-task-actions">
-                <i class="material-icons pageintel-view-task pageintel-visible" data-task="${title}">visibility</i>
-                <i class="material-icons pageintel-view-task pageintel-hidden" data-task="${title}" style="display: none;">visibility_off</i>
-                <i class="material-icons pageintel-validate-task" data-task="${title}">play_arrow</i>
+          var userQuestionItem = document.createElement('div');
+          userQuestionItem.className = 'pageintel-task-item pageintel-user-question';
+          userQuestionItem.innerHTML = `
+              <div class="pageintel-task-header">
+                  <div style="position: relative; flex-grow: 1;">
+                      <textarea id="user-question" placeholder="Ask a question..." style="width: 100%; border: none; border-bottom: 1px solid #ccc; background-color: #f5f5f5;  padding: 5px 30px 5px 5px;; outline: none; resize: none; overflow: hidden; box-sizing: border-box;"></textarea>
+                      <i class="material-icons pageintel-clear-text" style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); cursor: pointer;">close</i>
+                  </div>
+                  <div class="pageintel-task-actions">
+                      <i class="material-icons pageintel-save-task" data-task="user-question">save</i>
+                      <i class="material-icons pageintel-validate-task" data-task="user-question">play_arrow</i>
+                  </div>
               </div>
-            </div>
-            <div class="pageintel-task-details" style="display: none;">
-              <p><b>Description</b>: ${tasks[title].description || 'No description available'}</p>
-              <p><b>Prompt</b>: ${tasks[title].task || 'No prompt available'}</p>
-              <label class="pageintel-pin-label">
-                Pin this task to the top: <input type="checkbox" class="pageintel-pin-checkbox" ${tasks[title].pinned ? 'checked' : ''} data-task="${title}">
-              </label>
-
-
-            </div>
           `;
-          taskList.appendChild(taskItem);
 
-          taskItem.querySelectorAll('.pageintel-view-task').forEach(function (icon) {
-            icon.addEventListener('click', function () {
-              var taskDetails = this.closest('.pageintel-task-header').nextElementSibling;
-              taskDetails.classList.toggle('show'); // This will add or remove the 'show' class
-
-              var visibleIcon = this.parentNode.querySelector('.pageintel-visible');
-              var hiddenIcon = this.parentNode.querySelector('.pageintel-hidden');
-
-              // Toggle icons depending on whether task details are visible
-              if (taskDetails.classList.contains('show')) {
-                visibleIcon.style.display = 'none';
-                hiddenIcon.style.display = 'inline-block';
-              } else {
-                visibleIcon.style.display = 'inline-block';
-                hiddenIcon.style.display = 'none';
-              }
-            });
+          var userQuestionTextarea = userQuestionItem.querySelector('#user-question');
+          userQuestionTextarea.addEventListener('input', function () {
+              this.style.height = 'auto';
+              this.style.height = (this.scrollHeight) + 'px';
           });
-        }
+
+          userQuestionTextarea.addEventListener('keydown', function (event) {
+              if (event.key === 'Enter' && !event.shiftKey) {
+                  event.preventDefault();
+                  var playIcon = userQuestionItem.querySelector('.pageintel-validate-task');
+                  playIcon.click();
+              }
+          });
+
+          var saveTaskIcon = userQuestionItem.querySelector('.pageintel-save-task');
+          saveTaskIcon.addEventListener('click', function () {
+              var userQuestion = addPageContentToQuestion(userQuestionTextarea.value);
+              var taskName = prompt('Enter a name for the task:');
+              if (taskName) {
+                  chrome.storage.sync.get(['tasks'], function (items) {
+                      var tasks = items.tasks || {};
+                      tasks[taskName] = {
+                          description: 'User-defined task',
+                          task: userQuestion
+                      };
+                      chrome.storage.sync.set({ tasks: tasks }, function () {
+                          loadAllTasks(function () {
+                              loadTasks();
+                          });
+                      });
+                  });
+              }
+          });
+
+          var clearTextIcon = userQuestionItem.querySelector('.pageintel-clear-text');
+          clearTextIcon.addEventListener('click', function () {
+              userQuestionTextarea.value = '';
+              userQuestionTextarea.style.height = 'auto';
+          });
+
+          taskList.appendChild(userQuestionItem);
+
+          var sortedTasks = [];
+          var pinnedTasks = [];
+          var normalTasks = [];
+
+          for (var title in tasks) {
+              if (tasks[title].pinned) {
+                  pinnedTasks.push({ title: title, ...tasks[title] });
+              } else {
+                  normalTasks.push({ title: title, ...tasks[title] });
+              }
+          }
+
+          sortedTasks = pinnedTasks.concat(normalTasks);
+
+          sortedTasks.forEach(function(task) {
+              var title = task.title;
+              var pageUrls = storedPageUrls[title] || '';
+
+              if (pageUrls === '' || pageUrls.split(',').some(url => matchUrlWildcard(currentPageUrl, url.trim()))) {
+                  var taskItem = document.createElement('div');
+                  taskItem.className = 'pageintel-task-item';
+                  taskItem.innerHTML = `
+                      <div class="pageintel-task-header">
+                          <span class="pageintel-task-title">${title}</span>
+                          <div class="pageintel-task-actions">
+                              <i class="material-icons pageintel-view-task pageintel-visible" data-task="${title}">visibility</i>
+                              <i class="material-icons pageintel-view-task pageintel-hidden" data-task="${title}" style="display: none;">visibility_off</i>
+                              <i class="material-icons pageintel-validate-task" data-task="${title}">play_arrow</i>
+                          </div>
+                      </div>
+                      <div class="pageintel-task-details" style="display: none;">
+                          <p><b>Description</b>: ${tasks[title].description || 'No description available'}</p>
+                          <p><b>Prompt</b>: ${tasks[title].task || 'No prompt available'}</p>
+                          <label class="pageintel-pin-label">
+                              Pin this task to the top: <input type="checkbox" class="pageintel-pin-checkbox" ${tasks[title].pinned ? 'checked' : ''} data-task="${title}">
+                          </label>
+                      </div>
+                  `;
+
+                  taskList.appendChild(taskItem);
+
+                  taskItem.querySelectorAll('.pageintel-view-task').forEach(function (icon) {
+                      icon.addEventListener('click', function () {
+                          var taskDetails = this.closest('.pageintel-task-header').nextElementSibling;
+                          taskDetails.classList.toggle('show');
+
+                          var visibleIcon = this.parentNode.querySelector('.pageintel-visible');
+                          var hiddenIcon = this.parentNode.querySelector('.pageintel-hidden');
+
+                          if (taskDetails.classList.contains('show')) {
+                              visibleIcon.style.display = 'none';
+                              hiddenIcon.style.display = 'inline-block';
+                          } else {
+                              visibleIcon.style.display = 'inline-block';
+                              hiddenIcon.style.display = 'none';
+                          }
+                      });
+                  });
+              }
+          });
+
+          // Reapply the filter if it exists
+          if (currentFilterText) {
+              filterInput.value = currentFilterText;
+              const taskItems = document.querySelectorAll('.pageintel-task-item:not(.pageintel-user-question)');
+              taskItems.forEach(function (taskItem) {
+                  const taskTitle = taskItem.querySelector('.pageintel-task-title').textContent.toLowerCase();
+                  if (taskTitle.includes(currentFilterText)) {
+                      taskItem.style.display = 'block';
+                  } else {
+                      taskItem.style.display = 'none';
+                  }
+              });
+          }
+
+          if (callback && typeof callback === 'function') {
+              callback();
+          }
       });
-
-
-      if (callback && typeof callback === 'function') {
-        callback();
-      }
-    });
   });
 }
 
@@ -262,20 +248,20 @@ taskList.addEventListener('blur', function (event) {
 let filterInput = document.querySelector('.pageintel-filter-input');
 let clearFilterIcon = document.querySelector('.pageintel-clear-filter-icon');
 let filterIcon = document.querySelector('.pageintel-filter-icon');
+let currentFilterText = '';
+
 
 filterInput.addEventListener('input', function () {
-  const filterText = this.value.toLowerCase();
+  currentFilterText = this.value.toLowerCase();
+
   const taskItems = document.querySelectorAll('.pageintel-task-item:not(.pageintel-user-question)');
-
-
   taskItems.forEach(function (taskItem) {
-    const taskTitle = taskItem.querySelector('.pageintel-task-title').textContent.toLowerCase();
-
-    if (taskTitle.includes(filterText)) {
-      taskItem.style.display = 'block';
-    } else {
-      taskItem.style.display = 'none';
-    }
+      const taskTitle = taskItem.querySelector('.pageintel-task-title').textContent.toLowerCase();
+      if (taskTitle.includes(currentFilterText)) {
+          taskItem.style.display = 'block';
+      } else {
+          taskItem.style.display = 'none';
+      }
   });
 });
 
@@ -294,6 +280,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   clearFilterIcon.addEventListener('click', function () {
     filterInput.value = '';
+    currentFilterText = '';  // Clear the global filter text variable
     const taskItems = document.querySelectorAll('.pageintel-task-item');
     taskItems.forEach(function (taskItem) {
       taskItem.style.display = 'block';
