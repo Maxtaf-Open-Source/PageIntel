@@ -63,7 +63,9 @@ div.pageintel-div {
 }
 
 .pageintel-close:hover,
-.pageintel-close:focus {
+.pageintel-close:focus,
+.pageintel-save-task:hover,
+.pageintel-save-task:focus {
   color: black;
   text-decoration: none;
   cursor: pointer;

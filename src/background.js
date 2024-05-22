@@ -185,11 +185,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 function performOpenAICall(apiKey, model, messages, sendResponse, apiUrl = 'https://api.openai.com/v1/chat/completions') {
   fetchOpenAI(model, messages, apiKey, apiUrl)
     .then(data => {
-      if (data.choices && data.choices.length > 0) {
-        sendResponse({ result: data.choices[0].message.content });
-      } else {
-        sendResponse({ error: { message: 'No valid response from the API' } });
-      }
+      sendResponse({
+        result: data.result,
+        usage: data.usage
+      });
     })
     .catch(error => {
       console.log('Validation failed:', error);

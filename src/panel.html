@@ -42,7 +42,6 @@
             <button id="import-settings-toggle">Import Settings</button>
           </div>
 
-          <!-- ... other parts of your HTML ... -->
 
           <div id="import-settings-container" style="display: none;">
             <h4>Import Settings</h4>
@@ -110,6 +109,7 @@
             <input type="text" id="api-key" class="pageintel-input-text" placeholder="Enter API Key">
           </div>
         </div>
+
       </div>
 
       <!-- Validation Tasks Management Section -->
@@ -191,8 +191,26 @@
 
         </div>
       </div>
+      <div id="extension-info">
+        <h3 class="pageintel-collapsible">About</h3>
+        <div class="pageintel-content">
+          <h4>Token Usage</h4>
+          <p>Messages Since Reset: <span id="messages-since-reset">0</span></p>
+          <p>Prompt Tokens: <span id="prompt-tokens">0</span> (Avg: <span id="avg-prompt-tokens">0</span>)</p>
+          <p>Completion Tokens: <span id="completion-tokens">0</span> (Avg: <span id="avg-completion-tokens">0</span>)</p>
+          <p>Total Tokens: <span id="total-tokens">0</span> (Avg: <span id="avg-total-tokens">0</span>)</p>
+          <button id="reset-tokens">Reset</button>
+      
+          <h4>Extension Info</h4>
+          <p>Extension ID: <span id="extension-id"></span></p>
+          <p>Version: <span id="extension-version"></span></p>
+          <p>Author: <span id="extension-author"></span></p>
+          <p>Homepage: <a href="#" id="extension-homepage" target="_blank"></a></p>
+        </div>
+      </div>
 
     </div>
+    
   </div>
 
   <!-- Main Section -->

@@ -134,7 +134,10 @@ function loadTasks(callback) {
                       var tasks = items.tasks || {};
                       tasks[taskName] = {
                           description: 'User-defined task',
-                          task: userQuestion
+                          pinned: 'checked',
+                          task: userQuestion,
+
+
                       };
                       chrome.storage.sync.set({ tasks: tasks }, function () {
                           loadAllTasks(function () {
@@ -303,6 +306,8 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     });
   });
+  
+  loadExtensionInfo();
 });
 
 chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
@@ -366,6 +371,20 @@ function setupTextareaAutocomplete() {
     }
   });
 }
+
+function loadExtensionInfo() {
+  const manifest = chrome.runtime.getManifest();
+
+  document.getElementById('extension-id').textContent = chrome.runtime.id;
+  document.getElementById('extension-version').textContent = manifest.version;
+  document.getElementById('extension-author').textContent = manifest.author;
+
+  const homepageLink = document.getElementById('extension-homepage');
+  homepageLink.textContent = manifest.homepage_url;
+  homepageLink.href = manifest.homepage_url;
+}
+
+
 
 function showDataTagsPopup(dataTags) {
   const popup = document.createElement('div');
@@ -455,7 +474,7 @@ function showDataTagsPopup(dataTags) {
       selectedIndex = -1;
     }
   };
-
+  
   document.addEventListener('keydown', handleKeyDown);
 
   const highlightSelectedTag = () => {

@@ -28,7 +28,10 @@ export function fetchOpenAI(model, messages, apiKey, apiUrl) {
         const errorDetail = data.error ? `${data.error.message}` : response.statusText;
         throw new Error(`API Error: ${errorDetail}`);
       }
-      return data;
+      return {
+        result: data.choices[0].message.content,
+        usage: data.usage
+      };
     });
   })
   .catch(error => {

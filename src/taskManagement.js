@@ -245,7 +245,7 @@ function setupTaskEventListeners() {
       tasks[title] = {
         description: description,
         task: task,
-        pinned: isPinned 
+        pinned: isPinned
       };
       storedPageUrls[title] = pageUrls;
 
@@ -575,6 +575,10 @@ function copyToClipboard(text) {
 }
 
 
+let accumulatedPromptTokens = 0;
+let accumulatedCompletionTokens = 0;
+let accumulatedTotalTokens = 0;
+let messagesSinceReset = 0;
 
 function sendDataToOpenAI(task, taskTitle, isTestTaskButton = false) {
   showSpinner(taskTitle); // Show the spinner for specific task
@@ -626,11 +630,45 @@ function sendDataToOpenAI(task, taskTitle, isTestTaskButton = false) {
       } else {
         displayResult(response.result, isTestTaskButton);
         hideSpinner(taskTitle); // Hide spinner on successful response
+        accumulatedPromptTokens += response.usage.prompt_tokens;
+        accumulatedCompletionTokens += response.usage.completion_tokens;
+        accumulatedTotalTokens += response.usage.total_tokens;
+        messagesSinceReset++;
+
+        // Update token usage display
+        document.getElementById('messages-since-reset').textContent = messagesSinceReset;
+        document.getElementById('prompt-tokens').textContent = accumulatedPromptTokens;
+        document.getElementById('completion-tokens').textContent = accumulatedCompletionTokens;
+        document.getElementById('total-tokens').textContent = accumulatedTotalTokens;
+
+        // Calculate and display average token usage
+        const avgPromptTokens = (accumulatedPromptTokens / messagesSinceReset).toFixed(2);
+        const avgCompletionTokens = (accumulatedCompletionTokens / messagesSinceReset).toFixed(2);
+        const avgTotalTokens = (accumulatedTotalTokens / messagesSinceReset).toFixed(2);
+
+        document.getElementById('avg-prompt-tokens').textContent = avgPromptTokens;
+        document.getElementById('avg-completion-tokens').textContent = avgCompletionTokens;
+        document.getElementById('avg-total-tokens').textContent = avgTotalTokens;
+
       }
     });
   });
 }
 
+document.getElementById('reset-tokens').addEventListener('click', function () {
+  accumulatedPromptTokens = 0;
+  accumulatedCompletionTokens = 0;
+  accumulatedTotalTokens = 0;
+  messagesSinceReset = 0;
+
+  document.getElementById('messages-since-reset').textContent = messagesSinceReset;
+  document.getElementById('prompt-tokens').textContent = accumulatedPromptTokens;
+  document.getElementById('completion-tokens').textContent = accumulatedCompletionTokens;
+  document.getElementById('total-tokens').textContent = accumulatedTotalTokens;
+  document.getElementById('avg-prompt-tokens').textContent = '0';
+  document.getElementById('avg-completion-tokens').textContent = '0';
+  document.getElementById('avg-total-tokens').textContent = '0';
+});
 
 
 function clearAIInteractionSections() {
@@ -715,7 +753,15 @@ function processUserQuestion() {
 function addPageContentToQuestion(question) {
   const regex = /(?<!\\)\{([^}]+)\}/g;
   if (!regex.test(question)) {
-    return `${question}\n\nContent: {page-full-content}`;
+
+    const prompt = `
+      What follows is the user's prompt, to which the content of the current web page is appended. 
+      Make your best judgment whether the user's prompt is related to the web content, and in such case, take the content into account.
+      If you determine that the user's prompt is unrelated to the web page content, ignore the content and answer the prompt directly. Before you write out the response, first say RELATED if it is related or UNRELATED if it is unrelated and do not further justify your decesion.
+
+      User Prompt: ${question}
+      `;
+    return `${prompt}\n\Web Page Content: {page-full-content}`;
   }
   return question;
 }
