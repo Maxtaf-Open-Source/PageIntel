@@ -628,7 +628,7 @@ function sendDataToOpenAI(task, taskTitle, isTestTaskButton = false) {
           hideSpinner(taskTitle); // Hide spinner on handling error
         }
       } else {
-        displayResult(response.result, isTestTaskButton);
+        displayResult(processResponse(response.result), isTestTaskButton);
         hideSpinner(taskTitle); // Hide spinner on successful response
         accumulatedPromptTokens += response.usage.prompt_tokens;
         accumulatedCompletionTokens += response.usage.completion_tokens;
@@ -653,6 +653,19 @@ function sendDataToOpenAI(task, taskTitle, isTestTaskButton = false) {
       }
     });
   });
+}
+
+function processResponse(response) {
+  const lastChar = response.slice(-1);
+  const trimmedResponse = response.slice(0, -1); // Remove the invisible code before displaying to the user
+
+  if (lastChar === ' ') {
+    console.log("The response is related to the web page content.");
+  } else if (lastChar === '\t') {
+    console.log("The response is unrelated to the web page content.");
+  }
+
+  return trimmedResponse;
 }
 
 document.getElementById('reset-tokens').addEventListener('click', function () {
@@ -753,15 +766,14 @@ function processUserQuestion() {
 function addPageContentToQuestion(question) {
   const regex = /(?<!\\)\{([^}]+)\}/g;
   if (!regex.test(question)) {
-
     const prompt = `
-      What follows is the user's prompt, to which the content of the current web page is appended. 
-      Make your best judgment whether the user's prompt is related to the web content, and in such case, take the content into account.
-      If you determine that the user's prompt is unrelated to the web page content, ignore the content and answer the prompt directly. Before you write out the response, first say RELATED if it is related or UNRELATED if it is unrelated and do not further justify your decesion.
+    What follows is the user's prompt, to which the content of the current web page is appended. 
+    Make your best judgment whether the user's prompt is related to the web content, and in such case, take the content into account.
+    If you determine that the user's prompt is unrelated to the web page content, ignore the content and answer the prompt directly. 
 
-      User Prompt: ${question}
-      `;
-    return `${prompt}\n\Web Page Content: {page-full-content}`;
+    User Prompt: ${question}
+  `;
+  return `${prompt}\nWeb Page Content: {page-full-content}`;
   }
   return question;
 }
