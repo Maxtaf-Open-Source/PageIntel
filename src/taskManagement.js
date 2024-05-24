@@ -2,6 +2,8 @@
 
 import { loadTasks } from './panel.js';
 import { generalTags } from './generalTags.js';
+import { requestDataForTag } from './tagManagement.js';
+
 
 // Load all tasks in the settings panel
 function loadAllTasks(callback) {
@@ -420,44 +422,44 @@ function displayToastMessage(message) {
 }
 
 
-// Request data for a single tag from content.js
-function requestDataForTag(tag, selector) {
-  return new Promise((resolve, reject) => {
-    chrome.storage.sync.get(['dataTags'], function (items) {
-      const dataTags = items.dataTags || {};
-      if (!dataTags.hasOwnProperty(tag) && !generalTags.hasOwnProperty(tag)) {
-        reject(new Error(`Data tag "{${tag}}" is not defined.`));
-        return;
-      }
+// // Request data for a single tag from content.js
+// function requestDataForTag(tag, selector) {
+//   return new Promise((resolve, reject) => {
+//     chrome.storage.sync.get(['dataTags'], function (items) {
+//       const dataTags = items.dataTags || {};
+//       if (!dataTags.hasOwnProperty(tag) && !generalTags.hasOwnProperty(tag)) {
+//         reject(new Error(`Data tag "{${tag}}" is not defined.`));
+//         return;
+//       }
 
-      chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
-        if (tabs.length === 0) {
-          reject(new Error("No active tabs found"));
-          return;
-        }
+//       chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
+//         if (tabs.length === 0) {
+//           reject(new Error("No active tabs found"));
+//           return;
+//         }
 
-        chrome.tabs.sendMessage(tabs[0].id, { action: "requestData", tag: tag, selector: selector }, response => {
-          if (chrome.runtime.lastError) {
-            // Specific check for the common error when content.js is not loaded
-            if (chrome.runtime.lastError.message.includes("Could not establish connection. Receiving end does not exist")) {
-              const errorMessage = "The extension script has not been loaded into the current page. \n\nPlease reload your page and try again. This usually resolves the problem.";
-              const resultContainer = document.getElementById('pageintel-result'); // Ensure this ID matches your actual error display container
-              resultContainer.innerHTML = `<div class="error">${errorMessage}<button id="reload-page-button">Reload Page</button></div>`;
-              document.getElementById('reload-page-button').addEventListener('click', function () {
-                chrome.tabs.reload(tabs[0].id);
-              });
-              reject(new Error(errorMessage));
-            } else {
-              reject(new Error(chrome.runtime.lastError.message));
-            }
-          } else {
-            resolve(response.data);
-          }
-        });
-      });
-    });
-  });
-}
+//         chrome.tabs.sendMessage(tabs[0].id, { action: "requestData", tag: tag, selector: selector }, response => {
+//           if (chrome.runtime.lastError) {
+//             // Specific check for the common error when content.js is not loaded
+//             if (chrome.runtime.lastError.message.includes("Could not establish connection. Receiving end does not exist")) {
+//               const errorMessage = "The extension script has not been loaded into the current page. \n\nPlease reload your page and try again. This usually resolves the problem.";
+//               const resultContainer = document.getElementById('pageintel-result'); // Ensure this ID matches your actual error display container
+//               resultContainer.innerHTML = `<div class="error">${errorMessage}<button id="reload-page-button">Reload Page</button></div>`;
+//               document.getElementById('reload-page-button').addEventListener('click', function () {
+//                 chrome.tabs.reload(tabs[0].id);
+//               });
+//               reject(new Error(errorMessage));
+//             } else {
+//               reject(new Error(chrome.runtime.lastError.message));
+//             }
+//           } else {
+//             resolve(response.data);
+//           }
+//         });
+//       });
+//     });
+//   });
+// }
 
 // Main function to collect data for all tags and insert them into the task
 // Main function to collect data for all tags and insert them into the task
@@ -628,7 +630,7 @@ function sendDataToOpenAI(task, taskTitle, isTestTaskButton = false) {
           hideSpinner(taskTitle); // Hide spinner on handling error
         }
       } else {
-        displayResult(response.result, isTestTaskButton);
+        displayResult(processResponse(response.result), isTestTaskButton);
         hideSpinner(taskTitle); // Hide spinner on successful response
         accumulatedPromptTokens += response.usage.prompt_tokens;
         accumulatedCompletionTokens += response.usage.completion_tokens;
@@ -653,6 +655,19 @@ function sendDataToOpenAI(task, taskTitle, isTestTaskButton = false) {
       }
     });
   });
+}
+
+function processResponse(response) {
+  const lastChar = response.slice(-1);
+  const trimmedResponse = response.slice(0, -1); // Remove the invisible code before displaying to the user
+
+  if (lastChar === ' ') {
+    console.log("The response is related to the web page content.");
+  } else if (lastChar === '\t') {
+    console.log("The response is unrelated to the web page content.");
+  }
+
+  return trimmedResponse;
 }
 
 document.getElementById('reset-tokens').addEventListener('click', function () {
@@ -753,15 +768,14 @@ function processUserQuestion() {
 function addPageContentToQuestion(question) {
   const regex = /(?<!\\)\{([^}]+)\}/g;
   if (!regex.test(question)) {
-
     const prompt = `
     What follows is the user's prompt, to which the content of the current web page is appended. 
     Make your best judgment whether the user's prompt is related to the web content, and in such case, take the content into account.
-      If you determine that the user's prompt is unrelated to the web page content, ignore the content and answer the prompt directly. Before you write out the response, first say RELATED if it is related or UNRELATED if it is unrelated and do not further justify your decesion.
+    If you determine that the user's prompt is unrelated to the web page content, ignore the content and answer the prompt directly. 
 
     User Prompt: ${question}
   `;
-    return `${prompt}\n\Web Page Content: {page-full-content}`;
+  return `${prompt}\nWeb Page Content: {page-full-content}`;
   }
   return question;
 }

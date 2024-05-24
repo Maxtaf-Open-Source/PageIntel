@@ -2,7 +2,77 @@
 
 import { fetchOpenAI } from './api.js';
 
+// Plugin registry to keep track of registered plugins and their tags
+const pluginRegistry = {};
 
+// Handle messages from plugins
+chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => {
+  console.log("Received external message:", message);
+  if (message.action === "registerTags") {
+    const { pluginId, tagDefinitions } = message;
+    chrome.storage.sync.get(['pluginTags'], function (items) {
+      let pluginTags = items.pluginTags || {};
+
+    tagDefinitions.forEach(tagDef => {
+      pluginRegistry[tagDef.name] = { pluginId, description: tagDef.description };
+        pluginTags[tagDef.name] = { description: tagDef.description, pluginId: pluginId };
+      });
+
+      chrome.storage.sync.set({ pluginTags: pluginTags }, function() {
+        sendResponse({ status: "success" });
+      });
+    });
+  } else if (message.action === "processTag") {
+    const { tagName, context } = message;
+    if (pluginRegistry[tagName]) {
+      const { pluginId } = pluginRegistry[tagName];
+      chrome.runtime.sendMessage(pluginId, { action: "processTag", tagName, context }, (response) => {
+        if (chrome.runtime.lastError) {
+          sendResponse({ error: chrome.runtime.lastError.message });
+        } else {
+          sendResponse(response);
+        }
+      });
+    } else {
+      sendResponse({ error: `Tag "${tagName}" is not registered.` });
+    }
+  }
+  return true; // Indicate that the response is asynchronous
+});
+function getPluginTags() {
+  return pluginRegistry;
+}
+
+// Function to request tag processing from a plugin
+function requestTagProcessing(tagName, context) {
+  return new Promise((resolve, reject) => {
+    const tagInfo = pluginRegistry[tagName];
+    if (!tagInfo) {
+      return reject(new Error(`Tag "${tagName}" is not registered.`));
+    }
+    const { pluginId } = tagInfo;
+    chrome.runtime.sendMessage(pluginId, { action: "processTag", tagName, context }, (response) => {
+      if (chrome.runtime.lastError) {
+        reject(new Error(chrome.runtime.lastError.message));
+      } else if (response.error) {
+        reject(new Error(response.error));
+      } else {
+        resolve(response.data);
+      }
+    });
+  });
+}
+
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === 'getPluginTags') {
+    sendResponse({ tags: getPluginTags() });
+  } else if (request.action === 'processTag') {
+    requestTagProcessing(request.tagName, request.context)
+      .then(data => sendResponse({ result: data }))
+      .catch(error => sendResponse({ error: error.message }));
+    return true; // Indicate that the response is asynchronous
+  }
+});
 
 let currentModel = 'gpt-3.5-turbo';
 function createNameValueList(data) {

@@ -8,7 +8,7 @@ module.exports = (env, argv) => {
     mode: isProduction ? 'production' : 'development',
     entry: {
       content: './src/content.js', 
-      background: './src/background.js',
+      background: './src/background.js'
     },
     output: {
       path: path.resolve(__dirname, 'dist'),
@@ -39,8 +39,8 @@ module.exports = (env, argv) => {
           { from: 'src/tagManagement.js', to: 'tagManagement.js' },
           { from: 'src/taskManagement.js', to: 'taskManagement.js' },
           { from: 'src/panel.js', to: 'panel.js' },
-          { from: 'src/generalTags.js', to: 'generalTags.js' }
-        ],
+          { from: 'src/generalTags.js', to: 'generalTags.js' },
+        ]
       }),
     ],
   };

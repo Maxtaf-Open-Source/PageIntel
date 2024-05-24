@@ -1,7 +1,6 @@
 // tagManagement.js
 import { generalTags, isGeneralTag, getGeneralTagDescription, handleGeneralTag } from './generalTags.js';
-// Load all tags to the dropdown
-// tagManagement.js adjustments
+
 
 // Load all tags into the dropdown
 function loadAllTags() {
@@ -23,12 +22,84 @@ function loadAllTags() {
       var option = document.createElement('option');
       option.value = tagName;
       option.textContent = '[System] ' + tagName;
-      //option.disabled = true; // Disable the option to prevent editing or deletion
       option.style.color = 'blue'; // Visually distinguish general tags
       existingTagsSelect.appendChild(option);
     });
+
+    // Fetch and add plugin tags
+    chrome.runtime.sendMessage({ action: 'getPluginTags' }, function (response) {
+      const pluginTags = response.tags || {};
+      Object.keys(pluginTags).forEach(function (tagName) {
+        var option = document.createElement('option');
+        option.value = tagName;
+        option.textContent = '[Plugin] ' + tagName;
+        option.style.color = 'green'; // Visually distinguish plugin tags
+        existingTagsSelect.appendChild(option);
+      });
+    });
   });
 }
+
+// Request data for a single tag from content.js
+function requestDataForTag(tag, selector) {
+  return new Promise((resolve, reject) => {
+    chrome.storage.sync.get(['dataTags'], function (items) {
+      const dataTags = items.dataTags || {};
+      const isGeneral = generalTags.hasOwnProperty(tag);
+      const isPluginTag = !isGeneral && !dataTags.hasOwnProperty(tag);
+
+      if (!isGeneral && !dataTags.hasOwnProperty(tag) && !isPluginTag) {
+        reject(new Error(`Data tag "{${tag}}" is not defined.`));
+        return;
+      }
+
+      if (isGeneral) {
+        handleGeneralTag(tag)
+          .then(data => resolve(data))
+          .catch(error => reject(error));
+      } else if (isPluginTag) {
+        // Request processing from background.js for plugin tags
+        chrome.runtime.sendMessage({ action: 'processTag', tagName: tag, context: { selector: selector } }, (response) => {
+          if (chrome.runtime.lastError) {
+            reject(new Error(chrome.runtime.lastError.message));
+          } else if (response.error) {
+            reject(new Error(response.error));
+          } else {
+            resolve(response.result);
+          }
+        });
+      } else {
+        chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
+          if (tabs.length === 0) {
+            reject(new Error("No active tabs found"));
+            return;
+          }
+
+          chrome.tabs.sendMessage(tabs[0].id, { action: "requestData", tag: tag, selector: selector }, response => {
+            if (chrome.runtime.lastError) {
+              // Specific check for the common error when content.js is not loaded
+              if (chrome.runtime.lastError.message.includes("Could not establish connection. Receiving end does not exist")) {
+                const errorMessage = "The extension script has not been loaded into the current page. \n\nPlease reload your page and try again. This usually resolves the problem.";
+                const resultContainer = document.getElementById('pageintel-result'); // Ensure this ID matches your actual error display container
+                resultContainer.innerHTML = `<div class="error">${errorMessage}<button id="reload-page-button">Reload Page</button></div>`;
+                document.getElementById('reload-page-button').addEventListener('click', function () {
+                  chrome.tabs.reload(tabs[0].id);
+                });
+                reject(new Error(errorMessage));
+              } else {
+                reject(new Error(chrome.runtime.lastError.message));
+              }
+            } else {
+              resolve(response.data);
+            }
+          });
+        });
+      }
+    });
+  });
+}
+
+
 
 // Populate tag fields when a tag is selected, including description
 function populateTagFields() {
@@ -39,7 +110,6 @@ function populateTagFields() {
   var tagNameInput = document.getElementById('tag-name');
   var tagDescriptionInput = document.getElementById('tag-description');
   var tagSelectorInput = document.getElementById('tag-selector'); // Input for the tag's CSS selector
-
 
   if (isGeneralTag(tagName)) {
     // Populate the fields with system tag details
@@ -76,26 +146,45 @@ function populateTagFields() {
         tagDescriptionInput.style.backgroundColor = ''; // Reset background color
         tagSelectorInput.style.backgroundColor = ''; // Reset background color
       } else {
-        // Clear the fields if no tag is selected or found
-        tagNameInput.value = '';
-        tagDescriptionInput.value = '';
-        tagSelectorInput.value = ''; // Also clear the selector field
+        // Fetch plugin tags
+        chrome.runtime.sendMessage({ action: 'getPluginTags' }, function (response) {
+          const pluginTags = response.tags || {};
+          if (pluginTags.hasOwnProperty(tagName)) {
+            var tagDetails = pluginTags[tagName];
+            tagNameInput.value = tagName;
+            tagDescriptionInput.value = tagDetails.description; // Assuming description field exists
+            tagSelectorInput.value = ''; // Clear or set a default value for plugin tags
 
-        // Make fields editable
-        tagNameInput.readOnly = false;
-        tagDescriptionInput.readOnly = false;
-        tagSelectorInput.readOnly = false;
+            // Make fields read-only for plugin tags
+            tagNameInput.readOnly = true;
+            tagDescriptionInput.readOnly = true;
+            tagSelectorInput.readOnly = true; // Ensure the selector can't be edited for plugin tags
 
-        // Reset styles if necessary
-        tagNameInput.style.backgroundColor = ''; // Reset background color
-        tagDescriptionInput.style.backgroundColor = ''; // Reset background color
-        tagSelectorInput.style.backgroundColor = ''; // Reset background color
+            // Optionally, adjust styles or add indicators to signify that these are plugin tags and not editable
+            tagNameInput.style.backgroundColor = '#e0f7fa'; // Example: make the background color light cyan
+            tagDescriptionInput.style.backgroundColor = '#e0f7fa'; // Example: make the background color light cyan
+            tagSelectorInput.style.backgroundColor = '#e0f7fa'; // Example: make the background color light cyan
+          } else {
+            // Clear the fields if no tag is selected or found
+            tagNameInput.value = '';
+            tagDescriptionInput.value = '';
+            tagSelectorInput.value = ''; // Also clear the selector field
+
+            // Make fields editable
+            tagNameInput.readOnly = false;
+            tagDescriptionInput.readOnly = false;
+            tagSelectorInput.readOnly = false;
+
+            // Reset styles if necessary
+            tagNameInput.style.backgroundColor = ''; // Reset background color
+            tagDescriptionInput.style.backgroundColor = ''; // Reset background color
+            tagSelectorInput.style.backgroundColor = ''; // Reset background color
+          }
+        });
       }
     });
   }
 }
-
-
 
 // Delete the selected tag
 function deleteSelectedTag() {
@@ -129,7 +218,6 @@ function deleteSelectedTag() {
     }
   });
 }
-
 
 let eventListenersSetup = false;  // This flag will determine if listeners have been setup
 
@@ -170,9 +258,43 @@ function setupTagEventListeners() {
 }
 
 // Function to test a tag
-// tagManagement.js
+// function testTag() {
+//   const tagNameInput = document.getElementById('tag-name');
+//   const tagName = tagNameInput.value;
+//   const tagDescriptionInput = document.getElementById('tag-description');
+//   const tagSelectorInput = document.getElementById('tag-selector');
 
+//   const resultDisplay = document.getElementById('test-tag-result');
+//   const resultContent = document.getElementById('test-result-content');
+
+//   // Constructing the selector object
+//   const selectorObject = {
+//     description: tagDescriptionInput.value,
+//     selector: tagSelectorInput.value
+//   };
+
+//   resultDisplay.style.display = 'block';
+
+//   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+//     chrome.tabs.sendMessage(
+//       tabs[0].id,
+//       { action: "requestData", tag: tagName, selector: selectorObject },
+//       (response) => {
+//         if (chrome.runtime.lastError) {
+//           resultContent.textContent = 'Error: ' + chrome.runtime.lastError.message;
+//         } else {
+//           if (response && response.data) {
+//             resultContent.textContent = `Test Result: ${response.data}`;
+//           } else {
+//             resultContent.textContent = 'No data found or error occurred.';
+//           }
+//         }
+//       }
+//     );
+//   });
+// }
 // Function to test a tag
+
 function testTag() {
   const tagNameInput = document.getElementById('tag-name');
   const tagName = tagNameInput.value;
@@ -190,27 +312,14 @@ function testTag() {
 
   resultDisplay.style.display = 'block';
 
-  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    chrome.tabs.sendMessage(
-      tabs[0].id,
-      { action: "requestData", tag: tagName, selector: selectorObject },
-      (response) => {
-        if (chrome.runtime.lastError) {
-          resultContent.textContent = 'Error: ' + chrome.runtime.lastError.message;
-        } else {
-          if (response && response.data) {
-            resultContent.textContent = `Test Result: ${response.data}`;
-          } else {
-            resultContent.textContent = 'No data found or error occurred.';
-          }
-        }
-      }
-    );
-  });
+  requestDataForTag(tagName, selectorObject)
+    .then(data => {
+      resultContent.textContent = `Test Result: ${data}`;
+    })
+    .catch(error => {
+      resultContent.textContent = 'Error: ' + error.message;
+    });
 }
-
-
-
 
 function showFadeOutMessage(message) {
   const messageContainer = document.createElement('div');
@@ -247,15 +356,12 @@ function manageTagChanges() {
   console.log("Changes made, showing Save button"); // Debug log
 }
 
-
 // Function to show the "Save Tag" button
 function showSaveTagButton() {
   document.getElementById('save-tag').style.display = 'inline-block';
 }
 
-
 function saveOrUpdateTag() {
-
   console.log("Saving tag"); // Debug log
   tagChanged = false; // Reset the flag
   document.getElementById('save-tag').style.display = 'none'; // Hide Save button
@@ -293,4 +399,4 @@ document.getElementById('save-tag').style.display = 'none';
 
 
 // Export necessary functions
-export { loadAllTags, setupTagEventListeners };
+export { loadAllTags, setupTagEventListeners, requestDataForTag };
