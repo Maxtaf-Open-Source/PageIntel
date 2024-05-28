@@ -397,6 +397,12 @@ function saveOrUpdateTag() {
 
 document.getElementById('save-tag').style.display = 'none';
 
+// Add this line to listen for the reloadTags message
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === 'reloadTags') {
+    loadAllTags();
+  }
+});
 
 // Export necessary functions
 export { loadAllTags, setupTagEventListeners, requestDataForTag };

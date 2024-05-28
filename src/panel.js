@@ -4,7 +4,6 @@ import { loadAllTags, setupTagEventListeners } from './tagManagement.js';
 import { loadAllTasks, setupTaskEventListeners, addPageContentToQuestion } from './taskManagement.js';
 import { loadSettings, saveSettings, exportSettings, importSettings } from './settings.js';
 import { generalTags } from './generalTags.js';
-//import { fetchOpenAI } from './api.js';
 
 // Show settings modal
 function showSettingsModal() {
@@ -268,7 +267,6 @@ filterInput.addEventListener('input', function () {
   });
 });
 
-
 document.addEventListener('DOMContentLoaded', function () {
   let filterContainer = document.querySelector('.pageintel-filter-container');
   let filterIcon = document.querySelector('.pageintel-filter-icon');
@@ -357,7 +355,12 @@ function setupTextareaAutocomplete() {
       // Fetch available data tags
       chrome.storage.sync.get(['dataTags'], function (items) {
         const dataTags = items.dataTags || {};
-        showDataTagsPopup(dataTags);
+
+        // Fetch plugin tags
+        chrome.runtime.sendMessage({ action: 'getPluginTags' }, function (response) {
+          const pluginTags = response.tags || {};
+          showDataTagsPopup({ ...dataTags, ...pluginTags });
+        });
       });
     }
   });
@@ -383,8 +386,6 @@ function loadExtensionInfo() {
   homepageLink.textContent = manifest.homepage_url;
   homepageLink.href = manifest.homepage_url;
 }
-
-
 
 function showDataTagsPopup(dataTags) {
   const popup = document.createElement('div');
@@ -492,7 +493,6 @@ function showDataTagsPopup(dataTags) {
   positionPopupCenter(popup);
 }
 
-
 function positionPopupCenter(popup) {
   const textarea = document.getElementById('pageintel-new-validation-tasks');
   const rect = textarea.getBoundingClientRect();
@@ -505,7 +505,6 @@ function positionPopupCenter(popup) {
   popup.style.left = `${centerX}px`;
   popup.style.top = `${centerY}px`;
 }
-
 
 function insertTagAtCursor(tag) {
   const textarea = document.getElementById('pageintel-new-validation-tasks');
@@ -578,7 +577,6 @@ document.querySelector('.pageintel-user-guide-icon').addEventListener('click', f
     window.open('https://maxtaf-open-source.github.io/PageIntel/docs/userguide.html', '_blank');
   });
 
-
 document.getElementById('pageintel-display-in-popup').addEventListener('change', function () {
   chrome.storage.sync.set({ displayInPopup: this.checked }, function () {
     console.log('Show popup setting saved');
@@ -613,7 +611,6 @@ document.getElementById('skip-button').addEventListener('click', function () {
   document.getElementById('pageintel-firstTimeAlert').style.display = 'none';
   alert("You've chosen to proceed without an API key. Please go to the settings to configure your API key or import settings at any time.");
 });
-
 
 document.getElementById('import-settings-submit').addEventListener('click', async function () {
   var importSource = document.querySelector('input[name="import-source"]:checked').value;

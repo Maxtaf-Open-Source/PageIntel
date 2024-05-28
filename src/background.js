@@ -9,17 +9,25 @@ const pluginRegistry = {};
 chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => {
   console.log("Received external message:", message);
   if (message.action === "registerTags") {
-    const { pluginId, tagDefinitions } = message;
+    const { pluginId, namespace, tagDefinitions } = message;
+
+    if (!namespace || typeof namespace !== 'string' || namespace.trim() === '') {
+      sendResponse({ status: "error", message: "Namespace is required and must be a non-empty string." });
+      return;
+    }
+
     chrome.storage.sync.get(['pluginTags'], function (items) {
       let pluginTags = items.pluginTags || {};
 
     tagDefinitions.forEach(tagDef => {
-      pluginRegistry[tagDef.name] = { pluginId, description: tagDef.description };
-        pluginTags[tagDef.name] = { description: tagDef.description, pluginId: pluginId };
+        const namespacedTagName = `${namespace}:${tagDef.name}`;
+        pluginRegistry[namespacedTagName] = { pluginId, description: tagDef.description, namespace };
+        pluginTags[namespacedTagName] = { description: tagDef.description, pluginId: pluginId };
       });
 
       chrome.storage.sync.set({ pluginTags: pluginTags }, function() {
         sendResponse({ status: "success" });
+        chrome.runtime.sendMessage({ action: 'reloadTags' });
       });
     });
   } else if (message.action === "processTag") {
