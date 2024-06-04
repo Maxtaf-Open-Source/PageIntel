@@ -53,11 +53,7 @@ function requestDataForTag(tag, selector) {
         return;
       }
 
-      if (isGeneral) {
-        handleGeneralTag(tag)
-          .then(data => resolve(data))
-          .catch(error => reject(error));
-      } else if (isPluginTag) {
+      if (isPluginTag) {
         // Request processing from background.js for plugin tags
         chrome.runtime.sendMessage({ action: 'processTag', tagName: tag, context: { selector: selector } }, (response) => {
           if (chrome.runtime.lastError) {

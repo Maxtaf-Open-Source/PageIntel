@@ -1,9 +1,14 @@
 // background.js
 
 import { fetchOpenAI } from './api.js';
-
 // Plugin registry to keep track of registered plugins and their tags
 const pluginRegistry = {};
+chrome.storage.sync.get(['pluginRegistry'], function (items) {
+  if (items.pluginRegistry) {
+    Object.assign(pluginRegistry, items.pluginRegistry);
+  }
+});
+
 
 // Handle messages from plugins
 chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => {
@@ -19,34 +24,30 @@ chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => 
     chrome.storage.sync.get(['pluginTags'], function (items) {
       let pluginTags = items.pluginTags || {};
 
-    tagDefinitions.forEach(tagDef => {
+      tagDefinitions.forEach(tagDef => {
         const namespacedTagName = `${namespace}:${tagDef.name}`;
         pluginRegistry[namespacedTagName] = { pluginId, description: tagDef.description, namespace };
         pluginTags[namespacedTagName] = { description: tagDef.description, pluginId: pluginId };
       });
 
-      chrome.storage.sync.set({ pluginTags: pluginTags }, function() {
+      chrome.storage.sync.set({ pluginTags: pluginTags, pluginRegistry: pluginRegistry }, function () {
         sendResponse({ status: "success" });
-        chrome.runtime.sendMessage({ action: 'reloadTags' });
+
+        console.log('Attempting to send reloadTags message');
+        chrome.runtime.sendMessage({ action: 'reloadTags' }, (response) => {
+          if (chrome.runtime.lastError) {
+            // Log the error for debugging purposes or ignore it
+            console.log('UI panel not open, ignoring error:', chrome.runtime.lastError.message);
+          } else {
+            console.log('Response from reloadTags message:', response);
+          }
+        });
       });
     });
-  } else if (message.action === "processTag") {
-    const { tagName, context } = message;
-    if (pluginRegistry[tagName]) {
-      const { pluginId } = pluginRegistry[tagName];
-      chrome.runtime.sendMessage(pluginId, { action: "processTag", tagName, context }, (response) => {
-        if (chrome.runtime.lastError) {
-          sendResponse({ error: chrome.runtime.lastError.message });
-        } else {
-          sendResponse(response);
-        }
-      });
-    } else {
-      sendResponse({ error: `Tag "${tagName}" is not registered.` });
-    }
   }
   return true; // Indicate that the response is asynchronous
 });
+
 function getPluginTags() {
   return pluginRegistry;
 }
@@ -58,8 +59,12 @@ function requestTagProcessing(tagName, context) {
     if (!tagInfo) {
       return reject(new Error(`Tag "${tagName}" is not registered.`));
     }
-    const { pluginId } = tagInfo;
-    chrome.runtime.sendMessage(pluginId, { action: "processTag", tagName, context }, (response) => {
+    const { pluginId, namespace } = tagInfo;
+
+    // Strip the namespace from the tag name
+    const strippedTagName = tagName.replace(`${namespace}:`, '');
+
+    chrome.runtime.sendMessage(pluginId, { action: "processTag", tagName: strippedTagName, context }, (response) => {
       if (chrome.runtime.lastError) {
         reject(new Error(chrome.runtime.lastError.message));
       } else if (response.error) {
@@ -170,9 +175,9 @@ chrome.runtime.onInstalled.addListener(function (details) {
         "amazon-reviews": {
           description: "Focal Product reviews at Amazon",
           selector: "#reviewsMedley"
-        }    
+        }
       }
-      
+
     }, function () {
       console.log("The extension is installed. Default settings applied.");
 
@@ -243,7 +248,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
     // Keep the message channel open for asynchronous response
     return true;
-  } else  if (request.action === 'callOpenAI') {
+  } else if (request.action === 'callOpenAI') {
     // Check if apiKey is provided in the request, if not, retrieve it from storage
     if (request.data.apiKey) {
       performOpenAICall(request.data.apiKey, request.data.model, request.data.messages, sendResponse);

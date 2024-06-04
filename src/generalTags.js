@@ -65,14 +65,7 @@ function getGeneralTagDescription(tagName) {
 }
 
 function handleGeneralTag(tagName) {
-  return new Promise((resolve, reject) => {
-      try {
-          const result = generalTags[tagName].handler();
-          resolve(result);
-      } catch (error) {
-          reject(error);
-      }
-  });
+  return generalTags[tagName].handler();
 }
 
 function getFullContent(node) {
