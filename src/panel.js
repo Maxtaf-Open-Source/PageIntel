@@ -325,10 +325,21 @@ document.addEventListener('DOMContentLoaded', function () {
   loadAllTasks();
   loadAllTags();
   loadSettings();
-  loadTasks();
+  loadTasks(function () {
+    // Ensure the task list is loaded before setting up the textarea autocomplete
+    const newValidationTasksTextarea = document.getElementById('pageintel-new-validation-tasks');
+    const userQuestionTextarea = document.getElementById('user-question');
+
+    if (newValidationTasksTextarea && userQuestionTextarea) {
+      setupTextareaAutocomplete(newValidationTasksTextarea);
+      setupTextareaAutocomplete(userQuestionTextarea);
+    }
+    setupTaskEventListeners();
+  });
   setupTagEventListeners();
   initializeImportSettingsUI();
   checkApiKeyAndShowModal(); // Check the flag and show the modal if needed
+
 
   var coll = document.getElementsByClassName("pageintel-collapsible");
   for (var i = 0; i < coll.length; i++) {
@@ -341,13 +352,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
   toggleResultVisibility();
-  setupTaskEventListeners();
   setupTagEventListeners();
-  setupTextareaAutocomplete();
 });
 
-function setupTextareaAutocomplete() {
-  const textarea = document.getElementById('pageintel-new-validation-tasks');
+function setupTextareaAutocomplete(textarea) {
+  // const textarea = document.getElementById('pageintel-new-validation-tasks');
 
   textarea.addEventListener('keydown', function (event) {
     // Check if Ctrl+Space is pressed
@@ -357,7 +366,7 @@ function setupTextareaAutocomplete() {
       // Fetch available data tags
       chrome.storage.sync.get(['dataTags'], function (items) {
         const dataTags = items.dataTags || {};
-        showDataTagsPopup(dataTags);
+        showDataTagsPopup(dataTags, textarea);
       });
     }
   });
@@ -386,7 +395,7 @@ function loadExtensionInfo() {
 
 
 
-function showDataTagsPopup(dataTags) {
+function showDataTagsPopup(dataTags, textarea) {
   const popup = document.createElement('div');
   popup.setAttribute('id', 'dataTagsPopup');
   popup.style.position = 'absolute';
@@ -396,8 +405,10 @@ function showDataTagsPopup(dataTags) {
   popup.style.borderRadius = '5px';
   popup.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
   popup.style.zIndex = '1000';
-  popup.style.maxHeight = '200px'; // Set a maximum height for the popup
-  popup.style.overflowY = 'auto'; // Enable vertical scrolling when needed
+  popup.style.maxHeight = '200px';
+  popup.style.overflowY = 'auto';
+  popup.style.maxWidth = '90%'; // Add this line to limit the width of the popup
+  popup.style.minWidth = '200px'; // Add this line to set a minimum width for the popup
   document.body.appendChild(popup);
 
   const allTags = { ...dataTags };
@@ -417,7 +428,7 @@ function showDataTagsPopup(dataTags) {
       tagElement.style.margin = '5px 0';
       tagElement.style.color = tagDetails.isGeneral ? 'blue' : 'inherit'; // Color general tags in blue
       tagElement.addEventListener('click', function () {
-        insertTagAtCursor(tagName);
+        insertTagAtCursor(tagName, textarea);
         document.body.removeChild(popup);
         document.removeEventListener('keydown', handleKeyDown);
         selectedIndex = -1;
@@ -445,7 +456,7 @@ function showDataTagsPopup(dataTags) {
       event.stopPropagation();
       if (selectedIndex !== -1) {
         const [tagName] = filteredTags[selectedIndex];
-        insertTagAtCursor(tagName);
+        insertTagAtCursor(tagName, textarea);
         document.body.removeChild(popup);
         document.removeEventListener('keydown', handleKeyDown);
         selectedIndex = -1;
@@ -489,16 +500,15 @@ function showDataTagsPopup(dataTags) {
 
   document.addEventListener('keydown', handleKeyDown);
 
-  positionPopupCenter(popup);
+  positionPopupCenter(popup, textarea);
 }
 
 
-function positionPopupCenter(popup) {
-  const textarea = document.getElementById('pageintel-new-validation-tasks');
+function positionPopupCenter(popup, textarea) {
   const rect = textarea.getBoundingClientRect();
 
   // Calculate center position
-  const centerX = rect.left + (textarea.offsetWidth / 2) - (popup.offsetWidth / 2);
+  const centerX = Math.max(0, rect.left + (textarea.offsetWidth / 2) - (popup.offsetWidth / 2));
   const centerY = rect.top + (textarea.offsetHeight / 2) - (popup.offsetHeight / 2) + window.scrollY;
 
   // Apply calculated position
@@ -506,9 +516,7 @@ function positionPopupCenter(popup) {
   popup.style.top = `${centerY}px`;
 }
 
-
-function insertTagAtCursor(tag) {
-  const textarea = document.getElementById('pageintel-new-validation-tasks');
+function insertTagAtCursor(tag, textarea) {
   const cursorPos = textarea.selectionStart;
   const textBefore = textarea.value.substring(0, cursorPos);
   const textAfter = textarea.value.substring(cursorPos);
