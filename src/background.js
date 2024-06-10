@@ -23,7 +23,20 @@ chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => 
 
     chrome.storage.sync.get(['pluginTags'], function (items) {
       let pluginTags = items.pluginTags || {};
+      let existingTags = Object.keys(pluginTags).filter(tag => pluginTags[tag].pluginId === pluginId && tag.startsWith(namespace + ":"));
+      
+      let newTagNames = tagDefinitions.map(tagDef => `${namespace}:${tagDef.name}`);
 
+      // Identify tags to be removed
+      let tagsToRemove = existingTags.filter(tag => !newTagNames.includes(tag));
+
+      // Remove old tags
+      tagsToRemove.forEach(tag => {
+        delete pluginTags[tag];
+        delete pluginRegistry[tag];
+      });
+
+      // Add/Update new tags
       tagDefinitions.forEach(tagDef => {
         const namespacedTagName = `${namespace}:${tagDef.name}`;
         pluginRegistry[namespacedTagName] = { pluginId, description: tagDef.description, namespace };
