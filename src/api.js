@@ -18,7 +18,7 @@ export function fetchOpenAI(model, messages, apiKey, apiUrl) {
       model: model,
       messages: messages,
       temperature: 0,
-      max_tokens: 400
+      max_tokens: 4000
     })
   })
   .then(response => {
