@@ -1,7 +1,5 @@
 // api.js
 
-// Function to call the OpenAI API. Requires an apiKey parameter for enhanced security.
-// Modified fetchOpenAI function in api.js
 export function fetchOpenAI(model, messages, apiKey, apiUrl) {
   const headers = {
     'Content-Type': 'application/json',
@@ -17,8 +15,7 @@ export function fetchOpenAI(model, messages, apiKey, apiUrl) {
     body: JSON.stringify({
       model: model,
       messages: messages,
-      temperature: 0,
-      max_tokens: 4000
+      temperature: 0
     })
   })
   .then(response => {

@@ -7,12 +7,13 @@ import { loadAllTags } from './tagManagement.js'; // Add this import
 
 // Load settings when the panel is opened
 function loadSettings() {
-  chrome.storage.sync.get(['displayInPopup', 'apiKey', 'model', 'apiUrl','settingsPassword'], function (items) {
+  chrome.storage.sync.get(['displayInPopup', 'apiKey', 'model', 'apiUrl', 'settingsPassword', 'autoTruncatePrompts'], function (items) {
     document.getElementById('pageintel-display-in-popup').checked = items.displayInPopup !== false;
     document.getElementById('api-key').value = items.apiKey || '';
     document.getElementById('model-select').value = items.model || 'gpt-4';
     document.getElementById('settings-password').value = items.settingsPassword || '';
     document.getElementById('api-url').value = items.apiUrl || 'https://api.openai.com/v1/chat/completions';
+    document.getElementById('auto-truncate-prompts').checked = items.autoTruncatePrompts !== false; 
   });
 }
 
@@ -23,13 +24,16 @@ function saveSettings() {
   var displayInPopup = document.getElementById('pageintel-display-in-popup').checked;
   var settingsPassword = document.getElementById('settings-password').value;
   var apiUrl = document.getElementById('api-url').value;
+  var autoTruncatePrompts = document.getElementById('auto-truncate-prompts').checked;
+
 
   chrome.storage.sync.set({
     apiKey: apiKey,
     model: model,
     displayInPopup: displayInPopup,
     settingsPassword: settingsPassword,
-    apiUrl: apiUrl
+    apiUrl: apiUrl,
+    autoTruncatePrompts: autoTruncatePrompts
   }, function () {
     console.log('Settings saved');
   });
@@ -48,7 +52,10 @@ function exportSettings() {
       model: items.model || 'gpt-4',
       displayInPopup: items.displayInPopup !== false,
       pageUrls: items.pageUrls || {},
-      dataTags: items.dataTags || {} // Ensure this includes the full tag objects with descriptions
+      dataTags: items.dataTags || {},
+      autoTruncatePrompts: items.autoTruncatePrompts !== false,
+      apiUrl: items.apiUrl
+
     };
 
     var json = JSON.stringify(settings, null, 2);
@@ -116,7 +123,9 @@ async function importSettings(event, mode, url = null) {
           apiKey: settings.apiKey || existingSettings.apiKey,
           model: settings.model || existingSettings.model,
           displayInPopup: settings.displayInPopup !== undefined ? settings.displayInPopup : existingSettings.displayInPopup,
-          pageUrls: { ...existingSettings.pageUrls, ...settings.pageUrls }
+          pageUrls: { ...existingSettings.pageUrls, ...settings.pageUrls },
+          apiUrl:  settings.apiUrl || existingSettings.apiUrl,
+          displayIautoTruncatePrompts: settings.autoTruncatePrompts !== undefined ? settings.autoTruncatePrompts : existingSettings.autoTruncatePrompts,
         };
 
         chrome.storage.sync.set(mergedSettings, async function () {

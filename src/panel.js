@@ -1,7 +1,7 @@
 // panel.js
 
 import { loadAllTags, setupTagEventListeners } from './tagManagement.js';
-import { loadAllTasks, setupTaskEventListeners, addPageContentToQuestion } from './taskManagement.js';
+import { loadAllTasks, setupTaskEventListeners, addPageContentToQuestion, updateBlurEffect } from './taskManagement.js';
 import { loadSettings, saveSettings, exportSettings, importSettings } from './settings.js';
 import { generalTags } from './generalTags.js';
 
@@ -99,13 +99,13 @@ function loadTasks(callback) {
           userQuestionItem.className = 'pageintel-task-item pageintel-user-question';
           userQuestionItem.innerHTML = `
               <div class="pageintel-task-header">
-                  <div style="position: relative; flex-grow: 1;">
-                      <textarea id="user-question" placeholder="Ask a question..." style="width: 100%; border: none; border-bottom: 1px solid #ccc; background-color: #f5f5f5;  padding: 5px 30px 5px 5px;; outline: none; resize: none; overflow: hidden; box-sizing: border-box;"></textarea>
-                      <i class="material-icons pageintel-clear-text" style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); cursor: pointer;">close</i>
+                  <div style="position: relative; flex-grow: 1; margin-right:10px">
+                      <textarea id="user-question" placeholder="Ask a question..." style="width: 100%; border: none; border-bottom: 2px solid #f5f5f5; background-color: #fff;  padding: 15px 30px 0px 5px; outline: none; resize: none; overflow: hidden; box-sizing: border-box;"></textarea>
+                      <i class="material-symbols-outlined pageintel-clear-text" style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); cursor: pointer;">close</i>
                   </div>
                   <div class="pageintel-task-actions">
-                      <i class="material-icons pageintel-save-task" data-task="user-question">save</i>
-                      <i class="material-icons pageintel-validate-task" data-task="user-question">play_arrow</i>
+                      <i class="material-symbols-outlined pageintel-save-task" data-task="user-question">save</i>
+                      <i class="material-symbols-outlined pageintel-validate-task" data-task="user-question">send</i>
                   </div>
               </div>
           `;
@@ -180,9 +180,9 @@ function loadTasks(callback) {
                       <div class="pageintel-task-header">
                           <span class="pageintel-task-title">${title}</span>
                           <div class="pageintel-task-actions">
-                              <i class="material-icons pageintel-view-task pageintel-visible" data-task="${title}">visibility</i>
-                              <i class="material-icons pageintel-view-task pageintel-hidden" data-task="${title}" style="display: none;">visibility_off</i>
-                              <i class="material-icons pageintel-validate-task" data-task="${title}">play_arrow</i>
+                              <i class="material-symbols-outlined pageintel-view-task pageintel-visible" data-task="${title}">visibility</i>
+                              <i class="material-symbols-outlined pageintel-view-task pageintel-hidden" data-task="${title}" style="display: none;">visibility_off</i>
+                              <i class="material-symbols-outlined pageintel-validate-task" data-task="${title}">send</i>
                           </div>
                       </div>
                       <div class="pageintel-task-details" style="display: none;">
@@ -265,6 +265,7 @@ filterInput.addEventListener('input', function () {
           taskItem.style.display = 'none';
       }
   });
+  updateBlurEffect(); 
 });
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -288,6 +289,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     filterContainer.style.display = 'none';
     filterIcon.style.display = 'inline-block';
+    updateBlurEffect();
   });
 
   filterInput.addEventListener('input', function () {
@@ -488,7 +490,17 @@ function showDataTagsPopup(dataTags, textarea) {
   };
   
   document.addEventListener('keydown', handleKeyDown);
-
+  
+  document.addEventListener('click', function(event) {
+    const popup = document.getElementById('dataTagsPopup');
+    if (popup && !popup.contains(event.target)) {
+      document.body.removeChild(popup);
+      // Ensure the textarea is refocused after closing the popup
+      document.getElementById('pageintel-new-validation-tasks').focus();
+      // Removing the event listener might not be necessary depending on your design.
+      document.removeEventListener('keydown', handleKeyDown); 
+    }
+  });
   const highlightSelectedTag = () => {
     const tagElements = popup.getElementsByTagName('div');
     for (let i = 0; i < tagElements.length; i++) {
@@ -575,6 +587,7 @@ document.getElementById('api-key').addEventListener('input', saveSettings);
 document.getElementById('model-select').addEventListener('change', saveSettings);
 document.getElementById('pageintel-display-in-popup').addEventListener('change', saveSettings);
 document.getElementById('api-url').addEventListener('input', saveSettings);
+document.getElementById('auto-truncate-prompts').addEventListener('change', saveSettings);
 
 // Close settings modal
 document.querySelector('.pageintel-close').addEventListener('click', closeSettingsModal);
@@ -710,12 +723,27 @@ document.querySelectorAll('.password-toggle').forEach(function (button) {
     var inputType = targetInput.getAttribute('type');
     if (inputType === 'password') {
       targetInput.setAttribute('type', 'text');
-      this.innerHTML = '<i class="material-icons">visibility_off</i>';
+      this.innerHTML = '<i class="material-symbols-outlined">visibility_off</i>';
     } else {
       targetInput.setAttribute('type', 'password');
-      this.innerHTML = '<i class="material-icons">visibility</i>';
+      this.innerHTML = '<i class="material-symbols-outlined">visibility</i>';
     }
   });
 });
+
+document.addEventListener('DOMContentLoaded', function () {
+  const container = document.querySelector('#task-list');
+  const overlay = document.querySelector('.blur-overlay');
+
+  container.addEventListener('scroll', function () {
+      if (container.scrollHeight - container.scrollTop === container.clientHeight) {
+          overlay.classList.add('hidden');
+      } else {
+          overlay.classList.remove('hidden');
+    }
+  });
+});
+
+window.addEventListener('resize', updateBlurEffect);
 
 export { loadTasks };

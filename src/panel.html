@@ -5,6 +5,7 @@
   <title>Settings Panel</title>
   <link rel="stylesheet" type="text/css" href="style.css">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Outlined" rel="stylesheet">
 </head>
 
 <body>
@@ -28,8 +29,8 @@
       <div class="pageintel-modal-header">
         <h2>Settings</h2>
         <div class="pageintel-modal-icons">
-          <i class="material-icons pageintel-user-guide-icon" title="User Guide">help_outline</i>
-          <i class="material-icons pageintel-close" title="Close">close</i>
+          <i class="material-symbols-outlined pageintel-user-guide-icon" title="User Guide">help_outline</i>
+          <i class="material-symbols-outlined pageintel-close" title="Close">close</i>
         </div>
       </div>
 
@@ -80,13 +81,18 @@
             title="Enable this option to display validation results in a separate message box. Uncheck to show results in the side panel.">Show
             validation results in a message box:</label>
           <input type="checkbox" id="pageintel-display-in-popup" class="pageintel-input-checkbox" checked>
-
+          
+          <div>
+            <label for="auto-truncate-prompts">Automatically truncate prompts<br/> that exceed token limit:</label>
+            <input type="checkbox" id="auto-truncate-prompts" class="pageintel-input-checkbox">
+          </div>
+          
           <div>
             <label for="settings-password">Settings Password (optional):</label>
             <div class="password-input-container">
               <input type="password" id="settings-password" name="settings-password">
               <button class="password-toggle" data-target="settings-password">
-                <i class="material-icons">visibility</i>
+                <i class="material-symbols-outlined">visibility</i>
               </button>
               <button id="save-password">Save Password</button>
             </div>
@@ -121,10 +127,10 @@
           </select>
 
           <!-- Delete Task Button with Bin Icon -->
-          <button id="delete-task" class="material-icons" title="Delete AI Task">delete</button>
+          <button id="delete-task" class="material-symbols-outlined" title="Delete AI Task">delete</button>
 
           <!-- Add New Task Button -->
-          <button id="add-new-task" class="material-icons" title="Add New AI Task">add_circle_outline</button>
+          <button id="add-new-task" class="material-symbols-outlined" title="Add New AI Task">add_circle_outline</button>
           <p></p>
           <input type="hidden" id="original-task-title">
           <label for="task-title">AI Task Title:</label><br class="pageintel-br" />
@@ -166,10 +172,10 @@
           </select>
 
           <!-- Delete Tag Button with Bin Icon -->
-          <button id="delete-tag" class="material-icons" title="Delete Tag">delete</button>
+          <button id="delete-tag" class="material-symbols-outlined title="Delete Tag">delete</button>
 
           <!-- Add New Tag Button -->
-          <button id="add-new-tag" class="material-icons" title="Add New Tag">add_circle_outline</button>
+          <button id="add-new-tag" class="material-symbols-outlined" title="Add New Tag">add_circle_outline</button>
           <p></p>
           <input type="hidden" id="original-tag-name">
           <label for="tag-name">Tag Name:</label><br />
@@ -217,31 +223,33 @@
   <div id="pageintel-main-menu" class="pageintel-main-menu">
     <div class="pageintel-filter-container">
       <input type="text" class="pageintel-filter-input" placeholder="Filter tasks...">
-      <i class="material-icons pageintel-clear-filter-icon">close</i>
+      <i class="material-symbols-outlined pageintel-clear-filter-icon">close</i>
     </div>
-    <i class="material-icons pageintel-filter-icon">filter_list</i>
-    <img src="icons/settings_FILL0_wght400_GRAD0_opsz24.svg" class="pageintel-settings-icon" alt="Settings">
-    <i class="material-icons pageintel-user-guide-icon" title="User Guide">help_outline</i>
+    <i class="material-symbols-outlined pageintel-filter-icon">filter_list</i>
+    <i class="material-symbols-outlined pageintel-settings-icon">settings</i>
+    <i class="material-symbols-outlined pageintel-user-guide-icon" title="User Guide">help_outline</i>
   </div>
 
 
   <div class="pageintel-main-section">
+    <div class="task-list-container">
     <div id="task-list" class="pageintel-task-list pageintel-task-list-limited">
       <div class="pageintel-task-item">
         <div class="pageintel-task-header">
           <div style="position: relative; flex-grow: 1;">
             <textarea id="user-question" placeholder="Ask a question..."
-              style="width: 100%; border: none; border-bottom: none; background-color: #f5f5f5; padding: 5px 30px 5px 5px; outline: none; resize: none; overflow: hidden; box-sizing: border-box;"></textarea>
-            <i class="material-icons pageintel-clear-text"
+                style="width: 100%; border: none; border-bottom: none; background-color: #f9f9f9; padding: 10px 30px 5px 10px; outline: none; resize: none; overflow: hidden; box-sizing: border-box;"></textarea>
+              <i class="material-symbols-outlined pageintel-clear-text"
               style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); cursor: pointer;">close</i>
           </div>
           <div class="pageintel-task-actions">
-            <i class="material-icons pageintel-save-task" data-task="user-question">save</i>
-            <i class="material-icons pageintel-validate-task" data-task="user-question">play_arrow</i>
+              <i class="material-symbols-outlined pageintel-save-task" data-task="user-question">save</i>
+              <i class="material-symbols-outlined pageintel-validate-task" data-task="user-question">send</i>
+            </div>
           </div>
         </div>
       </div>
-      <!-- Task items will be dynamically added here -->
+      <div class="blur-overlay"></div>
     </div>
     <br />
     <div id="pageintel-result" class="pageintel-result-container"></div>
@@ -253,7 +261,7 @@
       <div class="password-input-container">
         <input type="password" id="password-input">
         <button class="password-toggle" data-target="password-input">
-          <i class="material-icons">visibility</i>
+          <i class="material-symbols-outlined">visibility</i>
         </button>
       </div>
       <button id="password-submit">Submit</button>

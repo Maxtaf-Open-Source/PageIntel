@@ -118,6 +118,20 @@ function updateTaskPinnedStatus(taskTitle, isPinned) {
   });
 }
 
+function updateBlurEffect() {
+  const taskList = document.getElementById('task-list');
+  const blurOverlay = document.querySelector('.blur-overlay');
+  // Check if the task list is scrollable
+  if (taskList.scrollHeight > taskList.clientHeight) {
+      blurOverlay.style.display = 'block';  // Show blur if scrollable
+  } else {
+      blurOverlay.style.display = 'none';   // Hide blur if not scrollable
+  }
+}
+
+// Call this function initially and whenever the task list might change
+updateBlurEffect();
+
 
 // Setup event listeners for task management
 function setupTaskEventListeners() {
@@ -617,7 +631,12 @@ function sendDataToOpenAI(task, taskTitle, isTestTaskButton = false) {
           let reductionRatio = maxTokens / currentTokens;
           let truncatedLength = Math.floor(task.length * reductionRatio * 0.9);
 
-          // Ask user if they want to truncate the message
+        chrome.storage.sync.get(['autoTruncatePrompts'], function (items) {
+          if (items.autoTruncatePrompts) {
+            hideSpinner(taskTitle); // Hide spinner before recursive call
+            sendDataToOpenAI(task.substring(0, truncatedLength), taskTitle, isTestTaskButton); // Recursively call with truncated task
+          } else {
+            // Ask user if they want to truncate the message
           if (confirm(`The prompt exceeds the maximum token limit. Would you like to truncate it to fit ${maxTokens} tokens?`)) {
             hideSpinner(taskTitle); // Hide spinner before recursive call
             sendDataToOpenAI(task.substring(0, truncatedLength), taskTitle, isTestTaskButton); // Recursively call with truncated task
@@ -625,6 +644,8 @@ function sendDataToOpenAI(task, taskTitle, isTestTaskButton = false) {
             displayResult('Prompt truncation cancelled by user.', isTestTaskButton);
             hideSpinner(taskTitle); // Hide spinner after user cancels
           }
+          }
+        });
         } else {
           displayResult(`Error: ${response.error.message}`, isTestTaskButton);
           hideSpinner(taskTitle); // Hide spinner on handling error
@@ -709,7 +730,7 @@ function showSpinner(taskTitle) {
   // Show spinner icon
   const playIcon = document.querySelector(`.pageintel-validate-task[data-task="${taskTitle}"]`);
   if (playIcon) {
-    playIcon.classList.remove('material-icons');
+    playIcon.classList.remove('material-symbols-outlined');
     playIcon.classList.add('pageintel-task-spinner');
     playIcon.textContent = '';
   }
@@ -722,8 +743,8 @@ function hideSpinner(taskTitle) {
   const playIcon = document.querySelector(`.pageintel-validate-task[data-task="${taskTitle}"]`);
   if (playIcon) {
     playIcon.classList.remove('pageintel-task-spinner');
-    playIcon.classList.add('material-icons');
-    playIcon.textContent = 'play_arrow';
+    playIcon.classList.add('material-symbols-outlined');
+    playIcon.textContent = 'send';
   }
 }
 
@@ -772,7 +793,8 @@ function addPageContentToQuestion(question) {
     What follows is the user's prompt, to which the content of the current web page is appended. 
     Make your best judgment whether the user's prompt is related to the web content, and in such case, take the content into account.
     If you determine that the user's prompt is unrelated to the web page content, ignore the content and answer the prompt directly. 
-
+    In your response, do not supply the reasoning related to determining whether the user question was related to the web page content or not.
+    
     User Prompt: ${question}
   `;
   return `${prompt}\nWeb Page Content: {page-full-content}`;
@@ -780,4 +802,4 @@ function addPageContentToQuestion(question) {
   return question;
 }
 // Export necessary functions
-export { loadAllTasks, setupTaskEventListeners, loadTasks, addPageContentToQuestion };
+export { loadAllTasks, setupTaskEventListeners, loadTasks, addPageContentToQuestion, updateBlurEffect };
