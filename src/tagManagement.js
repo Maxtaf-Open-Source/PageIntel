@@ -41,7 +41,7 @@ function loadAllTags() {
 }
 
 // Request data for a single tag from content.js
-function requestDataForTag(tag, selector) {
+function requestDataForTag(tag, selector, params = {}) {
   return new Promise((resolve, reject) => {
     chrome.storage.sync.get(['dataTags'], function (items) {
       const dataTags = items.dataTags || {};
@@ -55,7 +55,11 @@ function requestDataForTag(tag, selector) {
 
       if (isPluginTag) {
         // Request processing from background.js for plugin tags
-        chrome.runtime.sendMessage({ action: 'processTag', tagName: tag, context: { selector: selector } }, (response) => {
+        chrome.runtime.sendMessage({ 
+          action: 'processTag', 
+          tagName: tag, 
+          context: { selector: selector, params: params } 
+        }, (response) => {
           if (chrome.runtime.lastError) {
             reject(new Error(chrome.runtime.lastError.message));
           } else if (response.error) {

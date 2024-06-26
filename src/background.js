@@ -77,7 +77,11 @@ function requestTagProcessing(tagName, context) {
     // Strip the namespace from the tag name
     const strippedTagName = tagName.replace(`${namespace}:`, '');
 
-    chrome.runtime.sendMessage(pluginId, { action: "processTag", tagName: strippedTagName, context }, (response) => {
+    chrome.runtime.sendMessage(pluginId, { 
+      action: "processTag", 
+      tagName: strippedTagName, 
+      context: context 
+    }, (response) => {
       if (chrome.runtime.lastError) {
         reject(new Error(chrome.runtime.lastError.message));
       } else if (response.error) {

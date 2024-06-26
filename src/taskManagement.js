@@ -476,7 +476,7 @@ function displayToastMessage(message) {
 // }
 
 // Main function to collect data for all tags and insert them into the task
-// Main function to collect data for all tags and insert them into the task
+
 function collectAndInsertData(taskObject) {
   return new Promise((resolve, reject) => {
     chrome.storage.sync.get(['dataTags'], function (items) {
@@ -484,15 +484,29 @@ function collectAndInsertData(taskObject) {
       const tags = extractDataTagsFromTask(taskObject.task);
 
       const promises = tags.map(tag => {
-        const selector = dataTags[tag]?.selector;
-        return requestDataForTag(tag, selector);
+        let fullTagName, selector, params;
+        
+        if (!tag.namespace) {
+          // Old format
+          fullTagName = tag.tagName;
+          selector = dataTags[tag.tagName]?.selector;
+          params = {};
+        } else {
+          // New format
+          fullTagName = `${tag.namespace}:${tag.tagName}`;
+          selector = dataTags[fullTagName]?.selector;
+          params = tag.params || {};
+        }
+        
+        return requestDataForTag(fullTagName, selector, params);
       });
 
       Promise.all(promises)
         .then(dataArray => {
           let modifiedTask = taskObject.task;
           tags.forEach((tag, index) => {
-            modifiedTask = modifiedTask.replace(new RegExp(`(?<!\\\\)\\{${tag}\\}`, 'g'), dataArray[index]);
+            // Use the originalTag for replacement, which includes braces and any whitespace
+            modifiedTask = modifiedTask.replace(tag.originalTag, dataArray[index]);
           });
           resolve({
             ...taskObject,
@@ -501,21 +515,47 @@ function collectAndInsertData(taskObject) {
         })
         .catch(error => {
           console.log('An error occurred while collecting data:', error);
-          reject(error);  // Reject the promise if any of the requestDataForTag calls fail
+          reject(error);
         });
     });
   });
 }
-
-
 // Function to extract data tags from a task, considering escaped braces
 function extractDataTagsFromTask(task) {
-  const regex = /(?<!\\)\{([^}]+)\}/g; // Matches tags not preceded by a backslash
+  const regex = /(\{[^{}]+(?:\{[^{}]*\})*[^{}]*\})/g;
   const tags = [];
   let match;
+
   while ((match = regex.exec(task)) !== null) {
-    tags.push(match[1]);
+    const fullTagWithBraces = match[1];
+    const fullTag = fullTagWithBraces.slice(1, -1).trim(); // Remove outer braces and trim
+    const paramMatch = fullTag.match(/^([^(]+)(\(.*\))?$/);
+    
+    if (paramMatch) {
+      const [, namespacedTag, paramsString] = paramMatch;
+      const [namespace, tagName] = namespacedTag.split(':');
+      
+      let params = {};
+      if (paramsString) {
+        try {
+          params = JSON.parse(paramsString.slice(1, -1)); // Remove parentheses
+        } catch (error) {
+          console.error(`Error parsing parameters for tag ${namespacedTag}:`, error);
+        }
+      }
+      
+      tags.push({ 
+        originalTag: fullTagWithBraces,
+        namespace, 
+        tagName, 
+        params 
+      });
+    } else {
+      // Old format: just push the tag as an object with originalTag
+      tags.push({ originalTag: fullTagWithBraces, tagName: fullTag });
+    }
   }
+
   return tags;
 }
 

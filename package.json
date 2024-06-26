@@ -12,7 +12,8 @@
     "preversion": "npm run build",
     "postversion": "git push && git push --tags",
     "pack": "npm run build && mkdir -p releases && zip -r releases/pageintel-$(npm pkg get version | tr -d '\"').zip dist/ icons/ manifest.json",
-    "postbuild": "rm -f ./dist/manifest.json"
+    "postbuild": "rm -f ./dist/manifest.json",
+    "test": "jest"
   },
   "keywords": [],
   "author": "",
@@ -33,10 +34,14 @@
     "eslint-plugin-n": "^16.6.2",
     "eslint-plugin-promise": "^6.1.1",
     "globals": "^15.0.0",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
     "webpack": "^5.91.0",
     "webpack-cli": "^5.1.4"
   },
   "dependencies": {
     "gpt-3-encoder": "^1.1.4"
+  },"jest": {
+    "testEnvironment": "jsdom"
   }
 }
