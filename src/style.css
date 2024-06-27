@@ -33,6 +33,14 @@ div.pageintel-div {
 }
 
 
+#response-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  vertical-align: middle;
+  margin-left: 5px;
+}
+
 .pageintel-modal {
   display: none;
   position: fixed;

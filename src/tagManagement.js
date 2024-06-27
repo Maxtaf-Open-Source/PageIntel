@@ -45,8 +45,22 @@ function requestDataForTag(tag, selector, params = {}) {
   return new Promise((resolve, reject) => {
     chrome.storage.sync.get(['dataTags'], function (items) {
       const dataTags = items.dataTags || {};
+      
+      // Clean the tag if it contains ':undefined'
+      if (tag.includes(':undefined')) {
+        console.warn(`Tag "${tag}" contains ':undefined'. Cleaning it up.`);
+        tag = tag.split(':')[0];
+      }
+
+      // Debugging: Log the tag and generalTags
+      console.log('Requested tag:', tag);
+      console.log('General tags:', generalTags);
+
       const isGeneral = generalTags.hasOwnProperty(tag);
       const isPluginTag = !isGeneral && !dataTags.hasOwnProperty(tag);
+
+      console.log('isGeneral:', isGeneral);
+      console.log('isPluginTag:', isPluginTag);
 
       if (!isGeneral && !dataTags.hasOwnProperty(tag) && !isPluginTag) {
         reject(new Error(`Data tag "{${tag}}" is not defined.`));
@@ -75,6 +89,8 @@ function requestDataForTag(tag, selector, params = {}) {
             return;
           }
 
+          // Ensure the message port is handled correctly
+          console.log('Sending message to content script');
           chrome.tabs.sendMessage(tabs[0].id, { action: "requestData", tag: tag, selector: selector }, response => {
             if (chrome.runtime.lastError) {
               // Specific check for the common error when content.js is not loaded
@@ -89,6 +105,9 @@ function requestDataForTag(tag, selector, params = {}) {
               } else {
                 reject(new Error(chrome.runtime.lastError.message));
               }
+            } else if (!response) {
+              // Handle the case where the response is undefined
+              reject(new Error("No response received from content script."));
             } else {
               resolve(response.data);
             }

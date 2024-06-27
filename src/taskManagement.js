@@ -136,6 +136,9 @@ updateBlurEffect();
 // Setup event listeners for task management
 function setupTaskEventListeners() {
 
+  document.getElementById('process-prompt-button').addEventListener('click', processPrompt);
+  document.getElementById('process-and-test-button').addEventListener('click', processAndTest);
+
   document.addEventListener('click', function (event) {
     if (event.target.classList.contains('pageintel-pin-checkbox')) {
       const taskTitle = event.target.getAttribute('data-task');
@@ -322,39 +325,6 @@ function setupTaskEventListeners() {
     });
   });
 
-  document.getElementById('settings-validate-button').addEventListener('click', function () {
-    var task = document.getElementById('pageintel-new-validation-tasks').value;
-    clearAIInteractionSections();
-
-    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-      var currentTab = tabs[0];
-      if (!isHTMLPage(currentTab.url)) {
-        displayToastMessage("This type of page cannot be processed.");
-        return;
-      }
-
-      var taskContent = document.getElementById('pageintel-new-validation-tasks').value;
-      var description = document.getElementById('task-description').value;
-      var taskTitle = document.getElementById('task-title').value;
-      collectAndInsertData({ task: taskContent, description: description })
-        .then(modifiedTask => {
-          // Ensure the AI interaction container is visible
-          document.getElementById('aiInteractionContainer').style.display = 'block';
-
-          // Display the prompt in the pageintel-aiPrompt div
-          document.getElementById('pageintel-aiPrompt').textContent = modifiedTask.task;
-
-          // Send data to OpenAI, then display response
-          sendDataToOpenAI(modifiedTask.task, taskTitle, true); // The second parameter indicates this request is from the Test button
-        })
-        .catch(error => {
-          console.log('Error collecting data:', error);
-          displayToastMessage("This type of page cannot be processed.");
-        });
-    });
-  });
-
-
   var userQuestionTextarea = document.getElementById('user-question');
   userQuestionTextarea.addEventListener('input', function () {
     this.style.height = 'auto';
@@ -435,48 +405,6 @@ function displayToastMessage(message) {
   }, 3000);
 }
 
-
-// // Request data for a single tag from content.js
-// function requestDataForTag(tag, selector) {
-//   return new Promise((resolve, reject) => {
-//     chrome.storage.sync.get(['dataTags'], function (items) {
-//       const dataTags = items.dataTags || {};
-//       if (!dataTags.hasOwnProperty(tag) && !generalTags.hasOwnProperty(tag)) {
-//         reject(new Error(`Data tag "{${tag}}" is not defined.`));
-//         return;
-//       }
-
-//       chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
-//         if (tabs.length === 0) {
-//           reject(new Error("No active tabs found"));
-//           return;
-//         }
-
-//         chrome.tabs.sendMessage(tabs[0].id, { action: "requestData", tag: tag, selector: selector }, response => {
-//           if (chrome.runtime.lastError) {
-//             // Specific check for the common error when content.js is not loaded
-//             if (chrome.runtime.lastError.message.includes("Could not establish connection. Receiving end does not exist")) {
-//               const errorMessage = "The extension script has not been loaded into the current page. \n\nPlease reload your page and try again. This usually resolves the problem.";
-//               const resultContainer = document.getElementById('pageintel-result'); // Ensure this ID matches your actual error display container
-//               resultContainer.innerHTML = `<div class="error">${errorMessage}<button id="reload-page-button">Reload Page</button></div>`;
-//               document.getElementById('reload-page-button').addEventListener('click', function () {
-//                 chrome.tabs.reload(tabs[0].id);
-//               });
-//               reject(new Error(errorMessage));
-//             } else {
-//               reject(new Error(chrome.runtime.lastError.message));
-//             }
-//           } else {
-//             resolve(response.data);
-//           }
-//         });
-//       });
-//     });
-//   });
-// }
-
-// Main function to collect data for all tags and insert them into the task
-
 function collectAndInsertData(taskObject) {
   return new Promise((resolve, reject) => {
     chrome.storage.sync.get(['dataTags'], function (items) {
@@ -493,10 +421,14 @@ function collectAndInsertData(taskObject) {
           params = {};
         } else {
           // New format
-          fullTagName = `${tag.namespace}:${tag.tagName}`;
+          const optionalParam = tag.params && tag.params.someParam ? tag.params.someParam : '';
+          fullTagName = `${tag.namespace}:${tag.tagName}` + (optionalParam ? `:${optionalParam}` : '');
           selector = dataTags[fullTagName]?.selector;
           params = tag.params || {};
         }
+        
+        // Debugging: Log the full tag name
+        console.log('Constructed full tag name:', fullTagName);
         
         return requestDataForTag(fullTagName, selector, params);
       });
@@ -529,16 +461,16 @@ function extractDataTagsFromTask(task) {
   while ((match = regex.exec(task)) !== null) {
     const fullTagWithBraces = match[1];
     const fullTag = fullTagWithBraces.slice(1, -1).trim(); // Remove outer braces and trim
-    const paramMatch = fullTag.match(/^([^(]+)(\(.*\))?$/);
+    const paramMatch = fullTag.match(/^([^(]+)(\((.*)\))?$/);
     
     if (paramMatch) {
-      const [, namespacedTag, paramsString] = paramMatch;
-      const [namespace, tagName] = namespacedTag.split(':');
+      const [, namespacedTag, , paramsString] = paramMatch;
+      const [namespace, tagName] = namespacedTag.includes(':') ? namespacedTag.split(':') : ['', namespacedTag];
       
       let params = {};
       if (paramsString) {
         try {
-          params = JSON.parse(paramsString.slice(1, -1)); // Remove parentheses
+          params = JSON.parse(paramsString); // Assuming paramsString is a valid JSON string
         } catch (error) {
           console.error(`Error parsing parameters for tag ${namespacedTag}:`, error);
         }
@@ -546,8 +478,8 @@ function extractDataTagsFromTask(task) {
       
       tags.push({ 
         originalTag: fullTagWithBraces,
-        namespace, 
-        tagName, 
+        namespace: namespace || '', 
+        tagName: tagName || '', 
         params 
       });
     } else {
@@ -731,6 +663,65 @@ function processResponse(response) {
   return trimmedResponse;
 }
 
+function processPrompt() {
+  var taskContent = document.getElementById('pageintel-new-validation-tasks').value;
+  var description = document.getElementById('task-description').value;
+  
+  clearAIInteractionSections();
+  
+  chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+    var currentTab = tabs[0];
+    if (!isHTMLPage(currentTab.url)) {
+      displayToastMessage("This type of page cannot be processed.");
+      return;
+    }
+
+    collectAndInsertData({ task: taskContent, description: description })
+      .then(modifiedTask => {
+        document.getElementById('aiInteractionContainer').style.display = 'block';
+        document.getElementById('pageintel-aiPrompt').textContent = modifiedTask.task;
+        document.getElementById('pageintel-aiResponse').style.display = 'none';
+      })
+      .catch(error => {
+        console.log('Error processing prompt:', error);
+        displayToastMessage("Error processing the prompt. Please try again.");
+      });
+  });
+}
+
+
+function processAndTest() {
+  var taskContent = document.getElementById('pageintel-new-validation-tasks').value;
+  var description = document.getElementById('task-description').value;
+  var taskTitle = document.getElementById('task-title').value;
+
+  clearAIInteractionSections();
+
+  chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+    var currentTab = tabs[0];
+    if (!isHTMLPage(currentTab.url)) {
+      displayToastMessage("This type of page cannot be processed.");
+      return;
+    }
+
+    collectAndInsertData({ task: taskContent, description: description })
+      .then(modifiedTask => {
+        document.getElementById('aiInteractionContainer').style.display = 'block';
+        document.getElementById('pageintel-aiPrompt').textContent = modifiedTask.task;
+        document.getElementById('pageintel-aiResponse').style.display = 'block';
+        
+        // Send data to OpenAI and display response
+        sendDataToOpenAI(modifiedTask.task, taskTitle, true);
+      })
+      .catch(error => {
+        console.log('Error processing and testing:', error);
+        displayToastMessage("Error processing and testing the task. Please try again.");
+      });
+  });
+}
+
+
+
 document.getElementById('reset-tokens').addEventListener('click', function () {
   accumulatedPromptTokens = 0;
   accumulatedCompletionTokens = 0;
@@ -748,12 +739,10 @@ document.getElementById('reset-tokens').addEventListener('click', function () {
 
 
 function clearAIInteractionSections() {
-  // Clear AI Prompt and AI Response containers before executing new task
   document.getElementById('pageintel-aiPrompt').textContent = '';
   document.getElementById('pageintel-aiResponse').textContent = '';
   document.getElementById('aiInteractionContainer').style.display = 'block';
 }
-
 
 
 // Call this function inside setupTaskEventListeners to attach the event listener
@@ -766,25 +755,35 @@ document.getElementById('clear-ai-interaction').addEventListener('click', functi
 
 // Show spinner
 function showSpinner(taskTitle) {
-
-  // Show spinner icon
+  // Show spinner icon in the task list
   const playIcon = document.querySelector(`.pageintel-validate-task[data-task="${taskTitle}"]`);
   if (playIcon) {
     playIcon.classList.remove('material-symbols-outlined');
     playIcon.classList.add('pageintel-task-spinner');
     playIcon.textContent = '';
   }
+
+  // Show spinner next to "Response" in the AI interaction container
+  const responseSpinner = document.getElementById('response-spinner');
+  if (responseSpinner) {
+    responseSpinner.style.display = 'inline-block';
+  }
 }
 
 // Hide spinner
 function hideSpinner(taskTitle) {
-
-  // Hide spinner icon and restore play icon
+  // Hide spinner icon and restore play icon in the task list
   const playIcon = document.querySelector(`.pageintel-validate-task[data-task="${taskTitle}"]`);
   if (playIcon) {
     playIcon.classList.remove('pageintel-task-spinner');
     playIcon.classList.add('material-symbols-outlined');
     playIcon.textContent = 'send';
+  }
+
+  // Hide spinner next to "Response" in the AI interaction container
+  const responseSpinner = document.getElementById('response-spinner');
+  if (responseSpinner) {
+    responseSpinner.style.display = 'none';
   }
 }
 

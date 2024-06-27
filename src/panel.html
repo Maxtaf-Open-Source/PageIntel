@@ -14,7 +14,7 @@
   <!-- The Modal -->
   <div id="pageintel-settingsModal" class="pageintel-modal">
     <div class="pageintel-modal-content">
-    <div id="pageintel-firstTimeAlert" style="display:none;">
+      <div id="pageintel-firstTimeAlert" style="display:none;">
         <h1>Welcome to PageIntel by MaxTaf!</h1>
         <p>Before you start, you need to enter your API key. PageIntel requires this key to function properly as it
           powers all the tasks you can perform with this extension.</p>
@@ -81,12 +81,12 @@
             title="Enable this option to display validation results in a separate message box. Uncheck to show results in the side panel.">Show
             validation results in a message box:</label>
           <input type="checkbox" id="pageintel-display-in-popup" class="pageintel-input-checkbox" checked>
-          
+
           <div>
-            <label for="auto-truncate-prompts">Automatically truncate prompts<br/> that exceed token limit:</label>
+            <label for="auto-truncate-prompts">Automatically truncate prompts<br /> that exceed token limit:</label>
             <input type="checkbox" id="auto-truncate-prompts" class="pageintel-input-checkbox">
           </div>
-          
+
           <div>
             <label for="settings-password">Settings Password (optional):</label>
             <div class="password-input-container">
@@ -130,7 +130,8 @@
           <button id="delete-task" class="material-symbols-outlined" title="Delete AI Task">delete</button>
 
           <!-- Add New Task Button -->
-          <button id="add-new-task" class="material-symbols-outlined" title="Add New AI Task">add_circle_outline</button>
+          <button id="add-new-task" class="material-symbols-outlined"
+            title="Add New AI Task">add_circle_outline</button>
           <p></p>
           <input type="hidden" id="original-task-title">
           <label for="task-title">AI Task Title:</label><br class="pageintel-br" />
@@ -139,7 +140,8 @@
           <label for="task-description">Task Description:</label><br class="pageintel-br" />
           <textarea id="task-description" rows="3"></textarea>
           <div>
-            <label for="task-urls">Page URLs (comma-separated, use * for any number of characters and ? for a single character):</label><br class="pageintel-br" />
+            <label for="task-urls">Page URLs (comma-separated, use * for any number of characters and ? for a single
+              character):</label><br class="pageintel-br" />
             <input type="text" id="task-urls" class="pageintel-input-text" placeholder="Enter Page URLs"><br
               class="pageintel-br" />
           </div>
@@ -152,12 +154,13 @@
           <textarea id="pageintel-new-validation-tasks" placeholder="Enter AI Task"></textarea><br
             class="pageintel-br" />
           <button id="save-task" style="display: none;">Save Task</button>
-          <button id="settings-validate-button">Test this AI Task</button>
+          <button id="process-prompt-button">Process Prompt</button>
+          <button id="process-and-test-button">Process and Test</button>
           <div id="aiInteractionContainer" style="display: none;">
             <span class="pageintel-close" id="clear-ai-interaction">&times;</span>
             <h4>Prompt:</h4>
             <div id="pageintel-aiPrompt"></div>
-            <h4>Response:</h4>
+            <h4>Response: <span id="response-spinner" class="pageintel-task-spinner" style="display: none;"></span></h4>
             <div id="pageintel-aiResponse"></div>
           </div>
 
@@ -172,7 +175,7 @@
           </select>
 
           <!-- Delete Tag Button with Bin Icon -->
-          <button id="delete-tag" class="material-symbols-outlined title="Delete Tag">delete</button>
+          <button id="delete-tag" class="material-symbols-outlined title=" Delete Tag">delete</button>
 
           <!-- Add New Tag Button -->
           <button id="add-new-tag" class="material-symbols-outlined" title="Add New Tag">add_circle_outline</button>
@@ -188,7 +191,7 @@
             class="language-json"></textarea><br />
           <button id="save-tag">Save Tag</button><br /><br />
 
-          <button id="test-tag">Test Tag</button><br /><br />
+          <button id="test-tag">Test</button><br /><br />
           <div id="test-tag-result">
             <span class="pageintel-close" id="close-test-tag-result">&times;</span>
             <div id="test-result-content"><!-- Your test result content goes here --></div>
@@ -203,10 +206,11 @@
           <h4>Token Usage</h4>
           <p>Messages Since Reset: <span id="messages-since-reset">0</span></p>
           <p>Prompt Tokens: <span id="prompt-tokens">0</span> (Avg: <span id="avg-prompt-tokens">0</span>)</p>
-          <p>Completion Tokens: <span id="completion-tokens">0</span> (Avg: <span id="avg-completion-tokens">0</span>)</p>
+          <p>Completion Tokens: <span id="completion-tokens">0</span> (Avg: <span id="avg-completion-tokens">0</span>)
+          </p>
           <p>Total Tokens: <span id="total-tokens">0</span> (Avg: <span id="avg-total-tokens">0</span>)</p>
           <button id="reset-tokens">Reset</button>
-      
+
           <h4>Extension Info</h4>
           <p>Extension ID: <span id="extension-id"></span></p>
           <p>Version: <span id="extension-version"></span></p>
@@ -216,7 +220,7 @@
       </div>
 
     </div>
-    
+
   </div>
 
   <!-- Main Section -->
@@ -233,16 +237,16 @@
 
   <div class="pageintel-main-section">
     <div class="task-list-container">
-    <div id="task-list" class="pageintel-task-list pageintel-task-list-limited">
-      <div class="pageintel-task-item">
-        <div class="pageintel-task-header">
-          <div style="position: relative; flex-grow: 1;">
-            <textarea id="user-question" placeholder="Ask a question..."
+      <div id="task-list" class="pageintel-task-list pageintel-task-list-limited">
+        <div class="pageintel-task-item">
+          <div class="pageintel-task-header">
+            <div style="position: relative; flex-grow: 1;">
+              <textarea id="user-question" placeholder="Ask a question..."
                 style="width: 100%; border: none; border-bottom: none; background-color: #f9f9f9; padding: 10px 30px 5px 10px; outline: none; resize: none; overflow: hidden; box-sizing: border-box;"></textarea>
               <i class="material-symbols-outlined pageintel-clear-text"
-              style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); cursor: pointer;">close</i>
-          </div>
-          <div class="pageintel-task-actions">
+                style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); cursor: pointer;">close</i>
+            </div>
+            <div class="pageintel-task-actions">
               <i class="material-symbols-outlined pageintel-save-task" data-task="user-question">save</i>
               <i class="material-symbols-outlined pageintel-validate-task" data-task="user-question">send</i>
             </div>
