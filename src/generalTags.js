@@ -15,7 +15,7 @@ const generalTags = {
     },
     'page-input-data': {
         description: 'Data contained in input fields',
-        handler: function () {
+        handler: function (params) {
             const inputs = document.querySelectorAll('input, a[role="checkbox"]');
             const inputData = Array.from(inputs).map(input => {
                 let label = document.querySelector(`label[for="${input.id}"]`);
@@ -48,7 +48,7 @@ const generalTags = {
     },
     'page-full-content': {
         description: 'The full text content of the current page, including iframes and shadow DOMs',
-        handler: function () {
+        handler: function (params) {
           return getFullContent(document.body);
         }
     }
@@ -64,8 +64,8 @@ function getGeneralTagDescription(tagName) {
     return generalTags[tagName].description;
 }
 
-function handleGeneralTag(tagName) {
-  return generalTags[tagName].handler();
+function handleGeneralTag(tagName, params) {
+  return generalTags[tagName].handler(params);
 }
 
 function getFullContent(node) {

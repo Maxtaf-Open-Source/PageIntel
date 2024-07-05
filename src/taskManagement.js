@@ -3,6 +3,7 @@
 import { loadTasks } from './panel.js';
 import { generalTags } from './generalTags.js';
 import { requestDataForTag } from './tagManagement.js';
+import { resolveVariables, setVariable } from './variableResolution.js';
 
 
 // Load all tasks in the settings panel
@@ -405,62 +406,51 @@ function displayToastMessage(message) {
   }, 3000);
 }
 
-function collectAndInsertData(taskObject) {
-  return new Promise((resolve, reject) => {
-    chrome.storage.sync.get(['dataTags'], function (items) {
-      const dataTags = items.dataTags || {};
-      const tags = extractDataTagsFromTask(taskObject.task);
+async function collectAndInsertData(taskObject) {
+  const tags = extractDataTagsFromTask(taskObject.task);
 
-      const promises = tags.map(tag => {
-        let fullTagName, selector, params;
-        
-        if (!tag.namespace) {
-          // Old format
-          fullTagName = tag.tagName;
-          selector = dataTags[tag.tagName]?.selector;
-          params = {};
-        } else {
-          // New format
-          const optionalParam = tag.params && tag.params.someParam ? tag.params.someParam : '';
-          fullTagName = `${tag.namespace}:${tag.tagName}` + (optionalParam ? `:${optionalParam}` : '');
-          selector = dataTags[fullTagName]?.selector;
-          params = tag.params || {};
-        }
-        
-        // Debugging: Log the full tag name
-        console.log('Constructed full tag name:', fullTagName);
-        
-        return requestDataForTag(fullTagName, selector, params);
-      });
+  async function processTag(tag) {
+    const resolvedParams = {};
+    for (const [key, value] of Object.entries(tag.params)) {
+      if (value.startsWith('{') && value.endsWith('}')) {
+        // This is a nested tag, process it recursively
+        const nestedTag = extractDataTagsFromTask(value)[0];
+        const nestedResult = await processTag(nestedTag);
+        resolvedParams[key] = nestedResult;
+      } else {
+        resolvedParams[key] = await resolveVariables(value);
+      }
+    }
 
-      Promise.all(promises)
-        .then(dataArray => {
-          let modifiedTask = taskObject.task;
-          tags.forEach((tag, index) => {
-            // Use the originalTag for replacement, which includes braces and any whitespace
-            modifiedTask = modifiedTask.replace(tag.originalTag, dataArray[index]);
-          });
-          resolve({
-            ...taskObject,
-            task: cleanEscapedBraces(modifiedTask)
-          });
-        })
-        .catch(error => {
-          console.log('An error occurred while collecting data:', error);
-          reject(error);
-        });
-    });
+
+    const data = await requestDataForTag(tag.namespace && tag.namespace.length > 0 ? tag.namespace + ":" + tag.tagName : tag.tagName, tag.selector, resolvedParams);
+
+    setVariable(tag.variableName, data);
+    return data;
+  }
+
+  const results = await Promise.all(tags.map(processTag));
+
+  let modifiedTask = taskObject.task;
+  tags.forEach((tag, index) => {
+    modifiedTask = modifiedTask.replace(tag.originalTag, results[index]);
   });
+
+  return {
+    ...taskObject,
+    task: cleanEscapedBraces(modifiedTask)
+  };
 }
+
 // Function to extract data tags from a task, considering escaped braces
 function extractDataTagsFromTask(task) {
-  const regex = /(\{[^{}]+(?:\{[^{}]*\})*[^{}]*\})/g;
+  const regex = /(\{([^{}]+)(?:\{[^{}]*\})*[^{}]*\})/g;
   const tags = [];
   let match;
+  let tagIndex = 0;
 
   while ((match = regex.exec(task)) !== null) {
-    const fullTagWithBraces = match[1];
-    const fullTag = fullTagWithBraces.slice(1, -1).trim(); // Remove outer braces and trim
+    const [fullTagWithBraces, , fullTag] = match;
     const paramMatch = fullTag.match(/^([^(]+)(\((.*)\))?$/);
     
     if (paramMatch) {
@@ -469,27 +459,48 @@ function extractDataTagsFromTask(task) {
       
       let params = {};
       if (paramsString) {
-        try {
-          params = JSON.parse(paramsString); // Assuming paramsString is a valid JSON string
-        } catch (error) {
-          console.error(`Error parsing parameters for tag ${namespacedTag}:`, error);
-        }
+        params = parseParameters(paramsString);
       }
+      
+      const variableName = `${namespace}:${tagName}:${tagIndex}`;
       
       tags.push({ 
         originalTag: fullTagWithBraces,
         namespace: namespace || '', 
         tagName: tagName || '', 
-        params 
+        params,
+        variableName
       });
+
+      tagIndex++;
     } else {
-      // Old format: just push the tag as an object with originalTag
       tags.push({ originalTag: fullTagWithBraces, tagName: fullTag });
     }
   }
 
   return tags;
 }
+
+function parseParameters(paramsString) {
+  const params = {};
+  const regex = /(\w+):\s*((?:\{[^{}]+\})|(?:"[^"]*")|(?:'[^']*')|(?:[^,]+))/g;
+  let match;
+
+  while ((match = regex.exec(paramsString)) !== null) {
+    const [, key, value] = match;
+    params[key] = value.trim();
+
+    // Remove quotes if the value is a quoted string
+    if ((params[key].startsWith('"') && params[key].endsWith('"')) ||
+        (params[key].startsWith("'") && params[key].endsWith("'"))) {
+      params[key] = params[key].slice(1, -1);
+    }
+  }
+
+  return params;
+}
+
+
 
 // Clean escaped braces in task text
 function cleanEscapedBraces(task) {
@@ -841,4 +852,4 @@ function addPageContentToQuestion(question) {
   return question;
 }
 // Export necessary functions
-export { loadAllTasks, setupTaskEventListeners, loadTasks, addPageContentToQuestion, updateBlurEffect };
+export { loadAllTasks, setupTaskEventListeners, addPageContentToQuestion, updateBlurEffect, collectAndInsertData };

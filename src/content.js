@@ -213,7 +213,7 @@ function toggleSpinner(show) {
   spinner.style.display = show ? 'flex' : 'none';
 }
 
-function extractDataFromSelector(selectorConfig) {
+function extractDataFromSelector(selectorConfig, params)  {
   let extractedData = [];
 
   // Check if selectorConfig is a string (single selector)
@@ -308,7 +308,7 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     let responseData = "";
     
     if (isGeneralTag(request.tag)) {
-      responseData = handleGeneralTag(request.tag);
+      responseData = handleGeneralTag(request.tag, request.params);
     } else {
       // Debug: log the type and value of the received selector
       console.log("Received selector type:", typeof request.selector);
@@ -319,7 +319,7 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         try {
           let selector = JSON.parse(request.selector.selector);
           console.log("Parsed JSON successfully:", selector);
-          responseData = extractDataFromSelector(selector);
+          responseData = extractDataFromSelector(selector, request.params);
         } catch (e) {
           // Log parsing error and use the raw string as a fallback
           console.log("JSON parsing error:", e.message);
@@ -327,8 +327,7 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
           responseData = extractDataFromSelector(request.selector.selector);
         }
       } else {
-        // If the selector is not an object or doesn't have a 'selector' property, use it directly
-        responseData = extractDataFromSelector(request.selector);
+        responseData = extractDataFromSelector(request.selector, request.params);
       }
 
       if (responseData === '') {

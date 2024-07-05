@@ -53,6 +53,7 @@
         "dist/content.bundle.js",
         "dist/api.js",
         "dist/generalTags.js",
+        "dist/variableResolution.js",
         "dist/settings.js",
         "dist/tagManagement.js",
         "dist/taskManagement.js",

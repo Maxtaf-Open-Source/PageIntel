@@ -1,6 +1,6 @@
 // settings.js
 import { loadAllTasks } from './taskManagement.js';
-import { loadTasks } from './taskManagement.js';
+import { loadTasks } from './panel.js';
 import { loadAllTags } from './tagManagement.js'; // Add this import
 
 // settings.js

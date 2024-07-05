@@ -41,37 +41,34 @@ function loadAllTags() {
 }
 
 // Request data for a single tag from content.js
-function requestDataForTag(tag, selector, params = {}) {
+function requestDataForTag(tagName, selector, params = {}) {
   return new Promise((resolve, reject) => {
     chrome.storage.sync.get(['dataTags'], function (items) {
       const dataTags = items.dataTags || {};
       
-      // Clean the tag if it contains ':undefined'
-      if (tag.includes(':undefined')) {
-        console.warn(`Tag "${tag}" contains ':undefined'. Cleaning it up.`);
-        tag = tag.split(':')[0];
+      if (tagName.includes(':undefined')) {
+        console.warn(`Tag "${tagName}" contains ':undefined'. Cleaning it up.`);
+        tagName = tagName.split(':')[0];
       }
 
-      // Debugging: Log the tag and generalTags
-      console.log('Requested tag:', tag);
+      console.log('Requested tag:', tagName);
       console.log('General tags:', generalTags);
 
-      const isGeneral = generalTags.hasOwnProperty(tag);
-      const isPluginTag = !isGeneral && !dataTags.hasOwnProperty(tag);
+      const isGeneral = generalTags.hasOwnProperty(tagName);
+      const isPluginTag = !isGeneral && !dataTags.hasOwnProperty(tagName);
 
       console.log('isGeneral:', isGeneral);
       console.log('isPluginTag:', isPluginTag);
 
-      if (!isGeneral && !dataTags.hasOwnProperty(tag) && !isPluginTag) {
-        reject(new Error(`Data tag "{${tag}}" is not defined.`));
+      if (!isGeneral && !dataTags.hasOwnProperty(tagName) && !isPluginTag) {
+        reject(new Error(`Data tag "{${tagName}}" is not defined.`));
         return;
       }
 
       if (isPluginTag) {
-        // Request processing from background.js for plugin tags
         chrome.runtime.sendMessage({ 
           action: 'processTag', 
-          tagName: tag, 
+          tagName: tagName, 
           context: { selector: selector, params: params } 
         }, (response) => {
           if (chrome.runtime.lastError) {
@@ -89,24 +86,17 @@ function requestDataForTag(tag, selector, params = {}) {
             return;
           }
 
-          // Ensure the message port is handled correctly
           console.log('Sending message to content script');
-          chrome.tabs.sendMessage(tabs[0].id, { action: "requestData", tag: tag, selector: selector }, response => {
+          const tagSelector = isGeneral ? selector : dataTags[tagName].selector;
+          chrome.tabs.sendMessage(tabs[0].id, { action: "requestData", tag: tagName, selector: tagSelector, params: params }, response => {
             if (chrome.runtime.lastError) {
-              // Specific check for the common error when content.js is not loaded
               if (chrome.runtime.lastError.message.includes("Could not establish connection. Receiving end does not exist")) {
                 const errorMessage = "The extension script has not been loaded into the current page. \n\nPlease reload your page and try again. This usually resolves the problem.";
-                const resultContainer = document.getElementById('pageintel-result'); // Ensure this ID matches your actual error display container
-                resultContainer.innerHTML = `<div class="error">${errorMessage}<button id="reload-page-button">Reload Page</button></div>`;
-                document.getElementById('reload-page-button').addEventListener('click', function () {
-                  chrome.tabs.reload(tabs[0].id);
-                });
                 reject(new Error(errorMessage));
               } else {
                 reject(new Error(chrome.runtime.lastError.message));
               }
             } else if (!response) {
-              // Handle the case where the response is undefined
               reject(new Error("No response received from content script."));
             } else {
               resolve(response.data);
@@ -117,7 +107,6 @@ function requestDataForTag(tag, selector, params = {}) {
     });
   });
 }
-
 
 
 // Populate tag fields when a tag is selected, including description

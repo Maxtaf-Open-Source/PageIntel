@@ -40,6 +40,7 @@ module.exports = (env, argv) => {
           { from: 'src/taskManagement.js', to: 'taskManagement.js' },
           { from: 'src/panel.js', to: 'panel.js' },
           { from: 'src/generalTags.js', to: 'generalTags.js' },
+          { from: 'src/variableResolution.js', to: 'variableResolution.js' },
         ]
       }),
     ],
