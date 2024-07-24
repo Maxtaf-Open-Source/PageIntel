@@ -41,42 +41,57 @@ function loadAllTags() {
 }
 
 // Request data for a single tag from content.js
-function requestDataForTag(tagName, selector, params = {}) {
+async function requestDataForTag(tagName, selector, params = {}) {
   return new Promise((resolve, reject) => {
     chrome.storage.sync.get(['dataTags'], function (items) {
       const dataTags = items.dataTags || {};
-      
-      if (tagName.includes(':undefined')) {
-        console.warn(`Tag "${tagName}" contains ':undefined'. Cleaning it up.`);
-        tagName = tagName.split(':')[0];
-      }
 
       console.log('Requested tag:', tagName);
-      console.log('General tags:', generalTags);
+      console.log('Params:', params);
 
-      const isGeneral = generalTags.hasOwnProperty(tagName);
-      const isPluginTag = !isGeneral && !dataTags.hasOwnProperty(tagName);
+      const [namespace, bareTagName] = tagName.includes(':') ? tagName.split(':') : ['', tagName];
+      const isGeneral = generalTags.hasOwnProperty(bareTagName);
+      const isPluginTag = namespace !== '';
 
       console.log('isGeneral:', isGeneral);
       console.log('isPluginTag:', isPluginTag);
 
       if (!isGeneral && !dataTags.hasOwnProperty(tagName) && !isPluginTag) {
-        reject(new Error(`Data tag "{${tagName}}" is not defined.`));
+        const error = new Error(`Data tag "${tagName}" is not defined.`);
+        displayError({
+          message: error.message,
+          details: error.stack
+        });
+        reject(error);
         return;
       }
 
       if (isPluginTag) {
-        chrome.runtime.sendMessage({ 
-          action: 'processTag', 
-          tagName: tagName, 
-          context: { selector: selector, params: params } 
-        }, (response) => {
+        // Request processing from background.js for plugin tags
+        chrome.runtime.sendMessage({ action: 'processTag', tagName: bareTagName, namespace:namespace, context: params }, (response) => {
           if (chrome.runtime.lastError) {
-            reject(new Error(chrome.runtime.lastError.message));
-          } else if (response.error) {
-            reject(new Error(response.error));
-          } else {
+            const error = new Error(chrome.runtime.lastError.message);
+            displayError({
+              message: `Error processing plugin tag "${tagName}": ${error.message}`,
+              details: error.stack
+            });
+            reject(error);
+          } else if (response && response.error) {
+            const errorMessage = typeof response.error === 'object' ? JSON.stringify(response.error) : response.error;
+            displayError({
+              message: `Error processing plugin tag "${tagName}": ${errorMessage}`,
+              details: errorMessage
+            });
+            reject(new Error(errorMessage));
+          } else if (response && response.result) {
             resolve(response.result);
+          } else {
+            const error = new Error("Invalid response from plugin");
+            displayError({
+              message: `Error processing plugin tag "${tagName}": ${error.message}`,
+              details: error.stack
+            });
+            reject(error);
           }
         });
       } else {
@@ -86,18 +101,20 @@ function requestDataForTag(tagName, selector, params = {}) {
             return;
           }
 
-          console.log('Sending message to content script');
-          const tagSelector = isGeneral ? selector : dataTags[tagName].selector;
-          chrome.tabs.sendMessage(tabs[0].id, { action: "requestData", tag: tagName, selector: tagSelector, params: params }, response => {
+          chrome.tabs.sendMessage(tabs[0].id, { action: "requestData", tag: tagName, params: params, selector: selector }, response => {
             if (chrome.runtime.lastError) {
+              // Specific check for the common error when content.js is not loaded
               if (chrome.runtime.lastError.message.includes("Could not establish connection. Receiving end does not exist")) {
                 const errorMessage = "The extension script has not been loaded into the current page. \n\nPlease reload your page and try again. This usually resolves the problem.";
+                const resultContainer = document.getElementById('pageintel-result'); // Ensure this ID matches your actual error display container
+                resultContainer.innerHTML = `<div class="error">${errorMessage}<button id="reload-page-button">Reload Page</button></div>`;
+                document.getElementById('reload-page-button').addEventListener('click', function () {
+                  chrome.tabs.reload(tabs[0].id);
+                });
                 reject(new Error(errorMessage));
               } else {
                 reject(new Error(chrome.runtime.lastError.message));
               }
-            } else if (!response) {
-              reject(new Error("No response received from content script."));
             } else {
               resolve(response.data);
             }
@@ -108,6 +125,42 @@ function requestDataForTag(tagName, selector, params = {}) {
   });
 }
 
+
+function displayError(error) {
+  const errorContainer = document.getElementById('error-container');
+  if (!errorContainer) {
+    console.error('Error container not found in the UI');
+    return;
+  }
+
+  // Clear previous errors
+  errorContainer.innerHTML = '';
+
+  const errorElement = document.createElement('div');
+  errorElement.className = 'error-message';
+  errorElement.innerHTML = `
+    <div class="error-header">
+      <strong>Error:</strong>
+      <button class="close-error">&times;</button>
+    </div>
+    <p>${error.message || 'An unknown error occurred'}</p>
+    <button class="show-details">Show Details</button>
+    <pre class="error-details" style="display: none;">${error.details || error.stack || 'No additional details available'}</pre>
+  `;
+
+  errorElement.querySelector('.show-details').addEventListener('click', function () {
+    const details = this.nextElementSibling;
+    details.style.display = details.style.display === 'none' ? 'block' : 'none';
+    this.textContent = details.style.display === 'none' ? 'Show Details' : 'Hide Details';
+  });
+
+  errorElement.querySelector('.close-error').addEventListener('click', function () {
+    errorContainer.style.display = 'none';
+  });
+
+  errorContainer.appendChild(errorElement);
+  errorContainer.style.display = 'block';
+}
 
 // Populate tag fields when a tag is selected, including description
 function populateTagFields() {

@@ -801,3 +801,53 @@ div#task-list {
   margin-left: 10px;
   cursor: pointer;
 }
+/* In style.css */
+
+#error-container {
+  background-color: #ffebee;
+  border: 1px solid #ffcdd2;
+  border-radius: 4px;
+  margin: 10px 0;
+  padding: 10px;
+}
+
+.error-message {
+  color: #b71c1c;
+  margin-bottom: 10px;
+}
+
+.error-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.close-error {
+  background: none;
+  border: none;
+  color: #b71c1c;
+  cursor: pointer;
+  font-size: 1.2em;
+}
+
+.show-details {
+  background-color: #f44336;
+  border: none;
+  color: white;
+  padding: 5px 10px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 12px;
+  margin: 4px 2px;
+  cursor: pointer;
+}
+
+.error-details {
+  background-color: #ffffff;
+  border: 1px solid #ffcdd2;
+  padding: 10px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}

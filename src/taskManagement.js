@@ -412,19 +412,18 @@ async function collectAndInsertData(taskObject) {
   async function processTag(tag) {
     const resolvedParams = {};
     for (const [key, value] of Object.entries(tag.params)) {
-      if (value.startsWith('{') && value.endsWith('}')) {
+      if (value && typeof value === 'object' && value.nestedTag) {
         // This is a nested tag, process it recursively
-        const nestedTag = extractDataTagsFromTask(value)[0];
+        const nestedTag = extractDataTagsFromTask(`{${value.nestedTag}}`)[0];
         const nestedResult = await processTag(nestedTag);
         resolvedParams[key] = nestedResult;
       } else {
         resolvedParams[key] = await resolveVariables(value);
       }
     }
-
-
+  
     const data = await requestDataForTag(tag.namespace && tag.namespace.length > 0 ? tag.namespace + ":" + tag.tagName : tag.tagName, tag.selector, resolvedParams);
-
+  
     setVariable(tag.variableName, data);
     return data;
   }
@@ -438,34 +437,56 @@ async function collectAndInsertData(taskObject) {
 
   return {
     ...taskObject,
-    task: cleanEscapedBraces(modifiedTask)
+    task: modifiedTask
   };
 }
 
 // Function to extract data tags from a task, considering escaped braces
 function extractDataTagsFromTask(task) {
-  const regex = /(\{([^{}]+)(?:\{[^{}]*\})*[^{}]*\})/g;
+  console.log("Original task:", task);
+  const regex = /\{([^{}]+(?:\{[^{}]*\}[^{}]*)*)\}/g;
   const tags = [];
   let match;
   let tagIndex = 0;
 
   while ((match = regex.exec(task)) !== null) {
-    const [fullTagWithBraces, , fullTag] = match;
-    const paramMatch = fullTag.match(/^([^(]+)(\((.*)\))?$/);
-    
-    if (paramMatch) {
-      const [, namespacedTag, , paramsString] = paramMatch;
+    console.log("Matched tag:", match[0]);
+    const fullTag = match[1];
+    console.log("Full tag content:", fullTag);
+
+    const tagParts = fullTag.match(/^([^(]+)(?:\((.*)\))?$/);
+    if (tagParts) {
+      const [, namespacedTag, paramsString] = tagParts;
+      console.log("Namespaced tag:", namespacedTag);
+      console.log("Params string:", paramsString);
+
       const [namespace, tagName] = namespacedTag.includes(':') ? namespacedTag.split(':') : ['', namespacedTag];
-      
+      console.log("Namespace:", namespace);
+      console.log("Tag name:", tagName);
+
       let params = {};
       if (paramsString) {
-        params = parseParameters(paramsString);
+        try {
+          // Parse the parameters, handling nested tags
+          params = JSON.parse(paramsString.replace(/\{([^{}]+)\}/g, (match, p1) => `"${match}"`));
+          console.log("Parsed params:", params);
+          
+          // Process nested tags in parameters
+          for (let key in params) {
+            if (typeof params[key] === 'string' && params[key].startsWith('{') && params[key].endsWith('}')) {
+              params[key] = {nestedTag: params[key].slice(1, -1)};
+            }
+          }
+        } catch (error) {
+          console.error(`Error parsing parameters for tag ${tagName}:`, error);
+        }
       }
-      
+
       const variableName = `${namespace}:${tagName}:${tagIndex}`;
-      
+      console.log("Variable name:", variableName);
+
       tags.push({ 
-        originalTag: fullTagWithBraces,
+        originalTag: match[0],
         namespace: namespace || '', 
         tagName: tagName || '', 
         params,
@@ -474,10 +495,11 @@ function extractDataTagsFromTask(task) {
 
       tagIndex++;
     } else {
-      tags.push({ originalTag: fullTagWithBraces, tagName: fullTag });
+      console.error("Failed to parse tag parts:", fullTag);
     }
   }
 
+  console.log("Extracted tags:", tags);
   return tags;
 }
 

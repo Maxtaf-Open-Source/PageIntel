@@ -66,28 +66,31 @@ function getPluginTags() {
 }
 
 // Function to request tag processing from a plugin
-function requestTagProcessing(tagName, context) {
+function requestTagProcessing(tagName, namespace, context) {
   return new Promise((resolve, reject) => {
-    const tagInfo = pluginRegistry[tagName];
-    if (!tagInfo) {
-      return reject(new Error(`Tag "${tagName}" is not registered.`));
-    }
-    const { pluginId, namespace } = tagInfo;
+    const tagKey = namespace ? `${namespace}:${tagName}` : tagName;
+    const tagInfo = pluginRegistry[tagKey];
 
-    // Strip the namespace from the tag name
-    const strippedTagName = tagName.replace(`${namespace}:`, '');
+    if (!tagInfo) {
+      return reject(new Error(`Tag "${tagKey}" is not registered.`));
+    }
+
+    const { pluginId } = tagInfo;
 
     chrome.runtime.sendMessage(pluginId, { 
       action: "processTag", 
-      tagName: strippedTagName, 
+      tagName: tagName,
+      namespace: namespace,
       context: context 
     }, (response) => {
       if (chrome.runtime.lastError) {
         reject(new Error(chrome.runtime.lastError.message));
-      } else if (response.error) {
-        reject(new Error(response.error));
-      } else {
+      } else if (response && response.error) {
+        reject(response.error); // Pass the error object directly
+      } else if (response && response.data) {
         resolve(response.data);
+      } else {
+        reject(new Error("Invalid response from plugin"));
       }
     });
   });
@@ -97,7 +100,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'getPluginTags') {
     sendResponse({ tags: getPluginTags() });
   } else if (request.action === 'processTag') {
-    requestTagProcessing(request.tagName, request.context)
+    requestTagProcessing(request.tagName, request.namespace, request.context)
       .then(data => sendResponse({ result: data }))
       .catch(error => sendResponse({ error: error.message }));
     return true; // Indicate that the response is asynchronous
