@@ -630,7 +630,15 @@ function sendDataToOpenAI(task, taskTitle, isTestTaskButton = false) {
           hideSpinner(taskTitle); // Hide spinner on handling error
         }
       } else {
-        displayResult(processResponse(response.result), isTestTaskButton);
+        const processedResponse = processResponse(response.result);
+        displayResult(processedResponse, isTestTaskButton);
+        
+        // Update the pageintel-aiResponse div with line breaks
+        const aiResponseElement = document.getElementById('pageintel-aiResponse');
+        if (aiResponseElement) {
+          aiResponseElement.innerHTML = processedResponse.replace(/\n/g, '<br>');
+        }
+        
         hideSpinner(taskTitle); // Hide spinner on successful response
         accumulatedPromptTokens += response.usage.prompt_tokens;
         accumulatedCompletionTokens += response.usage.completion_tokens;
@@ -686,7 +694,7 @@ function processPrompt() {
     collectAndInsertData({ task: taskContent, description: description })
       .then(modifiedTask => {
         document.getElementById('aiInteractionContainer').style.display = 'block';
-        document.getElementById('pageintel-aiPrompt').textContent = modifiedTask.task;
+        document.getElementById('pageintel-aiPrompt').innerHTML = modifiedTask.task.replace(/\n/g, '<br>');
         document.getElementById('pageintel-aiResponse').style.display = 'none';
       })
       .catch(error => {
@@ -714,7 +722,7 @@ function processAndTest() {
     collectAndInsertData({ task: taskContent, description: description })
       .then(modifiedTask => {
         document.getElementById('aiInteractionContainer').style.display = 'block';
-        document.getElementById('pageintel-aiPrompt').textContent = modifiedTask.task;
+        document.getElementById('pageintel-aiPrompt').innerHTML = modifiedTask.task.replace(/\n/g, '<br>');
         document.getElementById('pageintel-aiResponse').style.display = 'block';
         
         // Send data to OpenAI and display response

@@ -4,74 +4,57 @@ import { generalTags, isGeneralTag, handleGeneralTag } from './generalTags.js';
 
 function parseTag(input) {
     console.log("Parsing tag input:", input);
-    let index = 0;
     
-    function parseTagContent() {
-        const start = index;
-        let depth = 1;
-        while (index < input.length) {
-            if (input[index] === '{') depth++;
-            if (input[index] === '}') depth--;
-            if (depth === 0) break;
-            index++;
-        }
-        return input.slice(start, index);
+    // Match the entire tag structure
+    const tagMatch = input.match(/^\{(\w+:)?(\w+)(\(.*\))?\}$/);
+    if (!tagMatch) {
+        console.error("Failed to parse tag:", input);
+        return null;
     }
 
-    function parseTagStructure() {
-        if (input[index] !== '{') return null;
-        index++; // Skip opening brace
-        const tagContent = parseTagContent();
-        index++; // Skip closing brace
-        
-        console.log("Parsed tag content:", tagContent);
-        
-        const [fullTag, namespace, tagName, paramsString] = tagContent.match(/^(?:(\w+):)?(\w+)(?:\((.*)\))?$/) || [];
-        
-        console.log("Parsed tag parts:", { fullTag, namespace, tagName, paramsString });
+    const [, namespaceWithColon, tagName, paramsString] = tagMatch;
+    const namespace = namespaceWithColon ? namespaceWithColon.slice(0, -1) : '';
 
-        let params = {};
-        if (paramsString) {
-            try {
-                // Replace nested tags with placeholders before parsing
-                const placeholderParamsString = paramsString.replace(/\{([^{}]+)\}/g, (match, p1) => {
-                    return `"__PLACEHOLDER__${p1}__"`;
-                });
-                params = JSON.parse(placeholderParamsString);
-                
-                // Process placeholders
-                for (let key in params) {
-                    if (typeof params[key] === 'string' && params[key].startsWith('__PLACEHOLDER__') && params[key].endsWith('__')) {
-                        const nestedTagContent = params[key].slice(14, -2); // Remove placeholder markers
-                        params[key] = parseTagStructure(`{${nestedTagContent}}`);
-                    }
-                }
-            } catch (error) {
-                console.error(`Error parsing parameters for tag ${tagName}:`, error);
-                // If parsing fails, treat the entire paramsString as a single parameter
-                params = { rawParams: paramsString };
-            }
+    console.log("Parsed tag parts:", { namespace, tagName, paramsString });
+
+    let params = {};
+    if (paramsString) {
+        // Remove the outer parentheses
+        const cleanParamsString = paramsString.slice(1, -1);
+        try {
+            params = JSON.parse(cleanParamsString);
+        } catch (error) {
+            console.error(`Error parsing parameters for tag ${tagName}:`, error);
+            params = { rawParams: cleanParamsString };
         }
-
-        return {
-            type: 'tag',
-            namespace: namespace || '',
-            name: tagName,
-            params: params
-        };
     }
 
-    const result = parseTagStructure();
+    const result = {
+        type: 'tag',
+        namespace: namespace,
+        name: tagName,
+        params: params
+    };
+
     console.log("Final parsed tag structure:", JSON.stringify(result, null, 2));
     return result;
 }
+
 async function processTagStructure(tagStructure) {
     console.log("Processing tag structure:", JSON.stringify(tagStructure, null, 2));
     if (!tagStructure || tagStructure.type !== 'tag') return tagStructure;
 
     // Process nested tags in params
     for (let key in tagStructure.params) {
-        if (tagStructure.params[key] && typeof tagStructure.params[key] === 'object' && tagStructure.params[key].type === 'tag') {
+        if (typeof tagStructure.params[key] === 'string') {
+            // Check if the parameter value is a nested tag
+            const nestedTagMatch = tagStructure.params[key].match(/^\{([^{}]+)\}$/);
+            if (nestedTagMatch) {
+                const nestedTagContent = nestedTagMatch[1];
+                const nestedTagStructure = parseTag(`{${nestedTagContent}}`);
+                tagStructure.params[key] = await processTagStructure(nestedTagStructure);
+            }
+        } else if (tagStructure.params[key] && typeof tagStructure.params[key] === 'object' && tagStructure.params[key].type === 'tag') {
             tagStructure.params[key] = await processTagStructure(tagStructure.params[key]);
         }
     }
@@ -131,8 +114,42 @@ async function requestDataForTag(tagStructure) {
 }
 
 async function parseAndProcessTags(input) {
-    const tagStructure = parseTag(input);
-    return await processTagStructure(tagStructure);
+    console.log("Parsing and processing input:", input);
+    const tagRegex = /\{(\w+:)?\w+(\(.*?\))?\}/g;
+    let match;
+    let lastIndex = 0;
+    let result = '';
+
+    while ((match = tagRegex.exec(input)) !== null) {
+        // Add any text before the tag
+        result += input.slice(lastIndex, match.index);
+
+        const fullTag = match[0];
+        const tagContent = match[1];
+        console.log("Processing tag:", fullTag);
+
+        const tagStructure = parseTag(fullTag);
+        if (tagStructure) {
+            try {
+                const processedTag = await processTagStructure(tagStructure);
+                result += processedTag;
+            } catch (error) {
+                console.error("Error processing tag:", error);
+                result += `[Error processing tag: ${error.message}]`;
+            }
+        } else {
+            result += fullTag; // Keep the original tag if parsing failed
+        }
+
+        lastIndex = tagRegex.lastIndex;
+    }
+
+    // Add any remaining text after the last tag
+    result += input.slice(lastIndex);
+
+    console.log("Final processed result:", result);
+    return result;
 }
+
 
 export { parseTag, processTagStructure, requestDataForTag, parseAndProcessTags };
