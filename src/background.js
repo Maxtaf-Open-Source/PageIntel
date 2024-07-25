@@ -9,6 +9,11 @@ chrome.storage.sync.get(['pluginRegistry'], function (items) {
   }
 });
 
+// debug
+chrome.storage.sync.get(['dataTags'], function(items) {
+  console.log("Registered data tags:", items.dataTags);
+});
+
 
 // Handle messages from plugins
 chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => {
@@ -66,46 +71,90 @@ function getPluginTags() {
 }
 
 // Function to request tag processing from a plugin
-function requestTagProcessing(tagName, namespace, context) {
+function requestTagProcessing(tagName, namespace, params) {
+  console.log("Requesting tag processing for:", tagName, "with namespace:", namespace, "and params:", JSON.stringify(params, null, 2));
   return new Promise((resolve, reject) => {
-    const tagKey = namespace ? `${namespace}:${tagName}` : tagName;
-    const tagInfo = pluginRegistry[tagKey];
+    chrome.storage.sync.get(['dataTags', 'pluginTags'], function(items) {
+      console.log("Retrieved dataTags:", JSON.stringify(items.dataTags, null, 2));
+      console.log("Retrieved pluginTags:", JSON.stringify(items.pluginTags, null, 2));
+      
+      const tagKey = namespace ? `${namespace}:${tagName}` : tagName;
+      console.log("Looking for tag with key:", tagKey);
+      
+      if (items.dataTags && items.dataTags[tagKey]) {
+        console.log("Found tag in dataTags:", JSON.stringify(items.dataTags[tagKey], null, 2));
+        // Process the tag using the selector from dataTags
+        chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+          if (chrome.runtime.lastError) {
+            reject(new Error(`Error querying tabs: ${chrome.runtime.lastError.message}`));
+            return;
+          }
+          if (tabs.length === 0) {
+            reject(new Error('No active tab found'));
+            return;
+          }
+          chrome.tabs.sendMessage(tabs[0].id, {
+            action: "requestData",
+            tag: tagKey,
+            selector: items.dataTags[tagKey],
+            params: params
+          }, function(response) {
+            if (chrome.runtime.lastError) {
+              reject(new Error(`Error sending message to content script: ${chrome.runtime.lastError.message}`));
+            } else if (response && response.data) {
+              resolve(response.data);
+            } else {
+              reject(new Error("Invalid response from content script"));
+            }
+          });
+        });
+      } else if (items.pluginTags && items.pluginTags[tagKey]) {
+        console.log("Found tag in pluginTags:", JSON.stringify(items.pluginTags[tagKey], null, 2));
+        const tagInfo = items.pluginTags[tagKey];
+        const { pluginId } = tagInfo;
 
-    if (!tagInfo) {
-      return reject(new Error(`Tag "${tagKey}" is not registered.`));
-    }
-
-    const { pluginId } = tagInfo;
-
-    chrome.runtime.sendMessage(pluginId, { 
-      action: "processTag", 
-      tagName: tagName,
-      namespace: namespace,
-      context: context 
-    }, (response) => {
-      if (chrome.runtime.lastError) {
-        reject(new Error(chrome.runtime.lastError.message));
-      } else if (response && response.error) {
-        reject(response.error); // Pass the error object directly
-      } else if (response && response.data) {
-        resolve(response.data);
+        chrome.runtime.sendMessage(pluginId, { 
+          action: "processTag", 
+          tagName: tagName,
+          namespace: namespace,
+          params: params 
+        }, (response) => {
+          if (chrome.runtime.lastError) {
+            reject(new Error(`Error sending message to plugin: ${chrome.runtime.lastError.message}`));
+          } else if (response && response.error) {
+            reject(response.error);
+          } else if (response && response.data) {
+            resolve(response.data);
+          } else {
+            reject(new Error("Invalid response from plugin"));
+          }
+        });
       } else {
-        reject(new Error("Invalid response from plugin"));
+        reject(new Error(`Tag "${tagKey}" is not registered.`));
       }
     });
   });
 }
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  console.log("Background script received message:", JSON.stringify(request, null, 2));
   if (request.action === 'getPluginTags') {
     sendResponse({ tags: getPluginTags() });
   } else if (request.action === 'processTag') {
-    requestTagProcessing(request.tagName, request.namespace, request.context)
-      .then(data => sendResponse({ result: data }))
-      .catch(error => sendResponse({ error: error.message }));
+    console.log("Received processTag request:", JSON.stringify(request, null, 2));
+    requestTagProcessing(request.tagName, request.namespace, request.params)
+      .then(data => {
+        console.log("Tag processing successful:", JSON.stringify(data, null, 2));
+        sendResponse({ result: data });
+      })
+      .catch(error => {
+        console.error("Tag processing failed:", error.message);
+        sendResponse({ error: error.message });
+      });
     return true; // Indicate that the response is asynchronous
   }
 });
+
 
 let currentModel = 'gpt-3.5-turbo';
 function createNameValueList(data) {

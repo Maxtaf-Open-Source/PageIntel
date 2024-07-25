@@ -37,6 +37,7 @@ module.exports = (env, argv) => {
           { from: 'src/settings.js', to: 'settings.js' },
           { from: 'icons', to: 'icons' },
           { from: 'src/tagManagement.js', to: 'tagManagement.js' },
+          { from: 'src/tagProcessor.js', to: 'tagProcessor.js' },
           { from: 'src/taskManagement.js', to: 'taskManagement.js' },
           { from: 'src/panel.js', to: 'panel.js' },
           { from: 'src/generalTags.js', to: 'generalTags.js' },

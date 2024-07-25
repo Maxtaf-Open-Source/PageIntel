@@ -1,5 +1,7 @@
 // tagManagement.js
 import { generalTags, isGeneralTag, getGeneralTagDescription, handleGeneralTag } from './generalTags.js';
+import { parseTag, processTagStructure, requestDataForTag } from './tagProcessor.js';
+
 
 
 // Load all tags into the dropdown
@@ -40,90 +42,6 @@ function loadAllTags() {
   });
 }
 
-// Request data for a single tag from content.js
-async function requestDataForTag(tagName, selector, params = {}) {
-  return new Promise((resolve, reject) => {
-    chrome.storage.sync.get(['dataTags'], function (items) {
-      const dataTags = items.dataTags || {};
-
-      console.log('Requested tag:', tagName);
-      console.log('Params:', params);
-
-      const [namespace, bareTagName] = tagName.includes(':') ? tagName.split(':') : ['', tagName];
-      const isGeneral = generalTags.hasOwnProperty(bareTagName);
-      const isPluginTag = namespace !== '';
-
-      console.log('isGeneral:', isGeneral);
-      console.log('isPluginTag:', isPluginTag);
-
-      if (!isGeneral && !dataTags.hasOwnProperty(tagName) && !isPluginTag) {
-        const error = new Error(`Data tag "${tagName}" is not defined.`);
-        displayError({
-          message: error.message,
-          details: error.stack
-        });
-        reject(error);
-        return;
-      }
-
-      if (isPluginTag) {
-        // Request processing from background.js for plugin tags
-        chrome.runtime.sendMessage({ action: 'processTag', tagName: bareTagName, namespace:namespace, context: params }, (response) => {
-          if (chrome.runtime.lastError) {
-            const error = new Error(chrome.runtime.lastError.message);
-            displayError({
-              message: `Error processing plugin tag "${tagName}": ${error.message}`,
-              details: error.stack
-            });
-            reject(error);
-          } else if (response && response.error) {
-            const errorMessage = typeof response.error === 'object' ? JSON.stringify(response.error) : response.error;
-            displayError({
-              message: `Error processing plugin tag "${tagName}": ${errorMessage}`,
-              details: errorMessage
-            });
-            reject(new Error(errorMessage));
-          } else if (response && response.result) {
-            resolve(response.result);
-          } else {
-            const error = new Error("Invalid response from plugin");
-            displayError({
-              message: `Error processing plugin tag "${tagName}": ${error.message}`,
-              details: error.stack
-            });
-            reject(error);
-          }
-        });
-      } else {
-        chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
-          if (tabs.length === 0) {
-            reject(new Error("No active tabs found"));
-            return;
-          }
-
-          chrome.tabs.sendMessage(tabs[0].id, { action: "requestData", tag: tagName, params: params, selector: selector }, response => {
-            if (chrome.runtime.lastError) {
-              // Specific check for the common error when content.js is not loaded
-              if (chrome.runtime.lastError.message.includes("Could not establish connection. Receiving end does not exist")) {
-                const errorMessage = "The extension script has not been loaded into the current page. \n\nPlease reload your page and try again. This usually resolves the problem.";
-                const resultContainer = document.getElementById('pageintel-result'); // Ensure this ID matches your actual error display container
-                resultContainer.innerHTML = `<div class="error">${errorMessage}<button id="reload-page-button">Reload Page</button></div>`;
-                document.getElementById('reload-page-button').addEventListener('click', function () {
-                  chrome.tabs.reload(tabs[0].id);
-                });
-                reject(new Error(errorMessage));
-              } else {
-                reject(new Error(chrome.runtime.lastError.message));
-              }
-            } else {
-              resolve(response.data);
-            }
-          });
-        });
-      }
-    });
-  });
-}
 
 
 function displayError(error) {

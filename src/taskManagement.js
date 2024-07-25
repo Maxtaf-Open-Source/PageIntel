@@ -2,8 +2,8 @@
 
 import { loadTasks } from './panel.js';
 import { generalTags } from './generalTags.js';
-import { requestDataForTag } from './tagManagement.js';
 import { resolveVariables, setVariable } from './variableResolution.js';
+import { parseTag, processTagStructure, requestDataForTag, parseAndProcessTags } from './tagProcessor.js';
 
 
 // Load all tasks in the settings panel
@@ -407,37 +407,11 @@ function displayToastMessage(message) {
 }
 
 async function collectAndInsertData(taskObject) {
-  const tags = extractDataTagsFromTask(taskObject.task);
-
-  async function processTag(tag) {
-    const resolvedParams = {};
-    for (const [key, value] of Object.entries(tag.params)) {
-      if (value && typeof value === 'object' && value.nestedTag) {
-        // This is a nested tag, process it recursively
-        const nestedTag = extractDataTagsFromTask(`{${value.nestedTag}}`)[0];
-        const nestedResult = await processTag(nestedTag);
-        resolvedParams[key] = nestedResult;
-      } else {
-        resolvedParams[key] = await resolveVariables(value);
-      }
-    }
+  const processedTask = await parseAndProcessTags(taskObject.task);
   
-    const data = await requestDataForTag(tag.namespace && tag.namespace.length > 0 ? tag.namespace + ":" + tag.tagName : tag.tagName, tag.selector, resolvedParams);
-  
-    setVariable(tag.variableName, data);
-    return data;
-  }
-
-  const results = await Promise.all(tags.map(processTag));
-
-  let modifiedTask = taskObject.task;
-  tags.forEach((tag, index) => {
-    modifiedTask = modifiedTask.replace(tag.originalTag, results[index]);
-  });
-
   return {
-    ...taskObject,
-    task: modifiedTask
+      ...taskObject,
+      task: processedTask
   };
 }
 
