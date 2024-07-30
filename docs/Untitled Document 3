@@ -1,0 +1,14 @@
+==========================
+{sr_description}
+==========================
+{gdr:getDocument({"name":"johny"})}
+==========================
+{gdr:getDocument({"name":"{sr_description}"})}
+
+FYI, Hello! {hlw:helloWorldTag}
+Greetings, {hlw:helloWorldTag(name: "Alice"})}
+
+
+Hello! {hlw:helloWorldTag}
+Greetings, {hlw:helloWorldTag({"name": "Alice"})}
+

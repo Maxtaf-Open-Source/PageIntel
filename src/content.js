@@ -213,76 +213,101 @@ function toggleSpinner(show) {
   spinner.style.display = show ? 'flex' : 'none';
 }
 
-function extractDataFromSelector(selectorConfig, params)  {
+function extractDataFromSelector(selectorConfig, params) {
+  console.log("Extracting data with selector config:", JSON.stringify(selectorConfig));
   let extractedData = [];
 
-  // Check if selectorConfig is a string (single selector)
+  // If selectorConfig is a string, try to parse it as JSON
   if (typeof selectorConfig === 'string') {
-    const elements = document.querySelectorAll(selectorConfig);
-    extractedData = Array.from(elements).map(el => {
-      if (el.tagName.toLowerCase() === 'input') {
-        return el.value;
-      } else {
-        return el.textContent.trim();
-      }
-    });
-  } else if (selectorConfig.selectors) {
-    // Handle multiple JSON selectors
+    try {
+      selectorConfig = JSON.parse(selectorConfig);
+      console.log("Parsed selector config:", JSON.stringify(selectorConfig));
+    } catch (e) {
+      console.error("Failed to parse selector config as JSON:", e);
+      // If parsing fails, treat it as a simple CSS selector
+      const elements = document.querySelectorAll(selectorConfig);
+      extractedData = Array.from(elements).map(el => el.tagName.toLowerCase() === 'input' ? el.value : el.textContent.trim());
+      return extractedData.join(", ");
+    }
+  }
+
+  // Now handle the JSON selector configuration
+  if (selectorConfig.selectors) {
     selectorConfig.selectors.forEach(selector => {
       let context = document;
 
       if (selector.iframe_path) {
-        selector.iframe_path.forEach(sel => {
-          context = context.querySelector(sel).contentWindow.document;
-        });
+        console.log("Processing iframe path:", selector.iframe_path);
+        for (let sel of selector.iframe_path) {
+          const iframe = context.querySelector(sel);
+          if (!iframe) {
+            console.error("Iframe not found:", sel);
+            return;
+          }
+          context = iframe.contentWindow.document;
+        }
       }
 
       if (selector.shadow_dom_path) {
-        selector.shadow_dom_path.forEach(sel => {
-          context = context.querySelector(sel).shadowRoot;
-        });
+        console.log("Processing shadow DOM path:", selector.shadow_dom_path);
+        for (let sel of selector.shadow_dom_path) {
+          const shadowHost = context.querySelector(sel);
+          if (!shadowHost || !shadowHost.shadowRoot) {
+            console.error("Shadow DOM not found:", sel);
+            return;
+          }
+          context = shadowHost.shadowRoot;
+        }
       }
 
+      console.log("Querying with selector:", selector.element_selector);
       const elements = context.querySelectorAll(selector.element_selector);
+      console.log("Found elements:", elements.length);
+      
       const selectorData = Array.from(elements).map(el => {
-        if (el.tagName.toLowerCase() === 'input') {
-          return el.value;
-        } else {
-          return el.textContent.trim();
-        }
+        return el.tagName.toLowerCase() === 'input' ? el.value : el.textContent.trim();
       });
 
       extractedData = extractedData.concat(selectorData);
     });
-  } else if (selectorConfig.element_selector) {
-    // Handle single JSON selector
-    let context = document;
-
-    if (selectorConfig.iframe_path) {
-      selectorConfig.iframe_path.forEach(sel => {
-        context = context.querySelector(sel).contentWindow.document;
-      });
-    }
-
-    if (selectorConfig.shadow_dom_path) {
-      selectorConfig.shadow_dom_path.forEach(sel => {
-        context = context.querySelector(sel).shadowRoot;
-      });
-    }
-
-    const elements = context.querySelectorAll(selectorConfig.element_selector);
-    extractedData = Array.from(elements).map(el => {
-      if (el.tagName.toLowerCase() === 'input') {
-        return el.value;
-      } else {
-        return el.textContent.trim();
-      }
-    });
   }
 
+  console.log("Extracted data:", extractedData);
   return extractedData.join(", ");
 }
 
+chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+  if (request.action === "requestData") {
+    console.log("Received requestData action for tag:", request.tag);
+    let responseData = "";
+    
+    try {
+      if (isGeneralTag(request.tag)) {
+        console.log("Processing general tag:", request.tag);
+        responseData = handleGeneralTag(request.tag, request.params);
+      } else {
+        console.log("Processing custom tag:", request.tag);
+        console.log("Selector:", JSON.stringify(request.selector));
+
+        // The selector is already a string, so we don't need to stringify it again
+        responseData = extractDataFromSelector(request.selector, request.params);
+
+        if (responseData === '') {
+          console.warn("No data found for selector:", request.selector);
+          responseData = "No data found";
+        }
+      }
+
+      console.log("Sending response data:", responseData);
+      sendResponse({ data: responseData });
+    } catch (error) {
+      console.error("Error processing tag:", error);
+      sendResponse({ error: error.message });
+    }
+
+    return true;  // Indicates an asynchronous response
+  }
+});
 
 
 // Listener for messages from panel.js
