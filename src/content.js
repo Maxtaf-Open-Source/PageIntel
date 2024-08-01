@@ -1,6 +1,13 @@
 // content.js
 import { isGeneralTag, handleGeneralTag } from './generalTags.js';
 
+// Load marked library
+const script = document.createElement('script');
+script.src = chrome.runtime.getURL('dist/marked.min.js');
+script.onload = function() {
+    this.remove();
+};
+(document.head || document.documentElement).appendChild(script);
 
 // Global flag to control form submission
 let allowFormSubmission = false;
@@ -79,47 +86,60 @@ function displayValidationResult(result) {
     if (items.displayInPopup) {
       let resultDisplay = document.getElementById('pageintel-validationResult') || createResultDisplay();
 
-      // Create a Shadow DOM
       let shadowRoot = resultDisplay.shadowRoot || resultDisplay.attachShadow({ mode: 'open' });
 
-      // Clear previous content
       shadowRoot.innerHTML = '';
 
-      // Create the popup content
       let popupContent = document.createElement('div');
       popupContent.innerHTML = `
-      <style>
-        @import url('chrome-extension://${chrome.runtime.id}/style.css');
-      </style>
+        <style>
+          @import url('chrome-extension://${chrome.runtime.id}/style.css');
+          @import url('chrome-extension://${chrome.runtime.id}/github-markdown.min.css');
+          .markdown-body {
+            box-sizing: border-box;
+            min-width: 200px;
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 45px;
+          }
+        </style>
         <div style="position: relative !important;">
-          <div id="pageintel-header-message-popup"  style="display: flex !important; align-items: center !important;">
+          <div id="pageintel-header-message-popup" style="display: flex !important; align-items: center !important;">
             <strong style="color: inherit !important; margin-right: 20px !important;">AI Response:</strong>
             <div style="margin-left: auto !important; display: flex !important; align-items: center !important;">
               <span id="pageintel-copy-result-popup" title="copy content" style="cursor: pointer !important; font-size: 30px !important; margin-right: 10px !important;">&#xe14d;</span>
               <span id="pageintel-close-result-popup" style="cursor: pointer !important; font-size: 30px !important;">&times;</span>
             </div>
           </div>
-          <pre style="white-space: pre-wrap !important; margin-top: 20px !important; font-family: inherit !important; color: inherit !important;">${result}</pre>
+          <div id="markdown-content" class="markdown-body" style="margin-top: 20px !important;"></div>
           <div id="pageintel-copy-message-popup" style="position: absolute !important; top: 30px !important; right: 0 !important; background-color: #A9A9A9 !important; color: white !important; padding: 5px 10px !important; border-radius: 4px !important; opacity: 0 !important; transition: opacity 0.3s !important;">Copied to clipboard!</div>
         </div>
       `;
 
-      // Append the popup content to the Shadow DOM
       shadowRoot.appendChild(popupContent);
 
-      // Add event listener to the copy button
+      // Parse markdown and insert content
+      const markdownContent = shadowRoot.getElementById('markdown-content');
+      if (typeof marked !== 'undefined') {
+        markdownContent.innerHTML = marked.parse(result);
+      } else {
+        markdownContent.innerHTML = result.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
+      }
+
       shadowRoot.getElementById('pageintel-copy-result-popup').addEventListener('click', function () {
         copyToClipboard(result);
         showCopyMessagePopup(shadowRoot);
       });
 
-      // Add event listener to the close button
       shadowRoot.getElementById('pageintel-close-result-popup').addEventListener('click', function () {
         resultDisplay.parentNode.removeChild(resultDisplay);
       });
+
+      document.body.appendChild(resultDisplay);
     }
   });
 }
+
 function showCopyMessagePopup(shadowRoot) {
   var copyMessage = shadowRoot.getElementById('pageintel-copy-message-popup');
   copyMessage.style.opacity = '1';
@@ -146,7 +166,7 @@ function createResultDisplay() {
   resultDisplay.style.setProperty('top', '50%', 'important');
   resultDisplay.style.setProperty('left', '50%', 'important');
   resultDisplay.style.setProperty('transform', 'translate(-50%, -50%)', 'important');
-  resultDisplay.style.setProperty('background', '#f5f5f5', 'important');
+  resultDisplay.style.setProperty('background', '#ffffff', 'important');
   resultDisplay.style.setProperty('box-shadow', '0 2px 10px rgba(0, 0, 0, 0.1)', 'important');
   resultDisplay.style.setProperty('border', '2px solid #ddd', 'important');
   resultDisplay.style.setProperty('padding', '24px', 'important');
@@ -154,13 +174,10 @@ function createResultDisplay() {
   resultDisplay.style.setProperty('max-width', '80%', 'important');
   resultDisplay.style.setProperty('max-height', '80%', 'important');
   resultDisplay.style.setProperty('overflow', 'auto', 'important');
-  resultDisplay.style.setProperty('font-family', 'Arial, sans-serif', 'important');
-  resultDisplay.style.setProperty('font-size', '16px', 'important');
-  resultDisplay.style.setProperty('line-height', '1.6', 'important');
-  resultDisplay.style.setProperty('color', '#333', 'important');
   document.body.appendChild(resultDisplay);
   return resultDisplay;
 }
+
 
 function addControlButtons(resultDisplay) {
   let closeButton = document.createElement('span');
@@ -263,7 +280,7 @@ function extractDataFromSelector(selectorConfig, params) {
       console.log("Querying with selector:", selector.element_selector);
       const elements = context.querySelectorAll(selector.element_selector);
       console.log("Found elements:", elements.length);
-      
+
       const selectorData = Array.from(elements).map(el => {
         return el.tagName.toLowerCase() === 'input' ? el.value : el.textContent.trim();
       });
@@ -280,7 +297,7 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   if (request.action === "requestData") {
     console.log("Received requestData action for tag:", request.tag);
     let responseData = "";
-    
+
     try {
       if (isGeneralTag(request.tag)) {
         console.log("Processing general tag:", request.tag);
@@ -331,7 +348,7 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   if (request.action === "requestData") {
     let responseData = "";
-    
+
     if (isGeneralTag(request.tag)) {
       responseData = handleGeneralTag(request.tag, request.params);
     } else {

@@ -851,3 +851,38 @@ div#task-list {
   white-space: pre-wrap;
   word-wrap: break-word;
 }
+
+
+@media (max-width: 767px) {
+  .markdown-body {
+    padding: 15px;
+  }
+}
+
+.markdown-body {
+  box-sizing: border-box;
+  min-width: 200px;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px;
+  font-size: 14px;
+}
+
+#pageintel-result .markdown-body {
+  max-height: none;
+  overflow-y: visible;
+}
+
+#pageintel-aiResponse.markdown-body {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.markdown-body pre {
+  background-color: #f6f8fa;
+  border-radius: 3px;
+  font-size: 85%;
+  line-height: 1.45;
+  overflow: auto;
+  padding: 16px;
+}

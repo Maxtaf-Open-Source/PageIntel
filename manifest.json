@@ -42,7 +42,8 @@
   ],
   "content_security_policy": {
     "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
-  }, 
+  },
+
   "externally_connectable": {
     "ids": ["*"],
     "matches": ["*://*/*"]
@@ -58,7 +59,10 @@
         "dist/tagManagement.js",
         "dist/tagProcessor.js",
         "dist/taskManagement.js",
-        "dist/panel.js"
+        "dist/panel.js",
+        "dist/marked.min.js",
+        "dist/github-markdown.min.css",
+        "dist/style.css"
       ],
       "matches": [
         "<all_urls>"
@@ -74,5 +78,6 @@
     }
   ],
   "author": "MaxTAF",
-  "homepage_url": "https://github.com/Maxtaf-Open-Source/PageIntel"
+  "homepage_url": "https://github.com/Maxtaf-Open-Source/PageIntel",
+  "key": "LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUF4RU5jeXo1cTNOZ0lNRUtkUFE4aQoxRkpyaEhtUXFKeVI3WEVNVnVGVDlncDFiQUM4dXZCRWVnTEVEaVEzeGVra2FWd2ZiK2dGeTBkTUpIZjdBVU5pCksyQXo0Z2lUZjZvYWRoN25nWXNXM2pCTzJZbFVueXc1SUZzclFmRldpbU5IWWNVYVlBZ3BmZk1vc1ZLazY4MncKajJFNlRLYTlIcGErc1pTdmFwaCtxUEx2VmwyakxtR2ZyMGkwMHdCUmdYWUZCZDlpYnFBMGo3L2R3SHF4MFJJNwpaYjlzQWx1SWlJa3l4NjBwTlJWRU9iUVZRUlRTNGlDeXAweDQ3bkRIQXZIcGNjUHdXSWUvV2N6aXZWQk43TFlsClJ2R0FKeWwzV0ZscGM5WlB4TXFzbjBzWXM3UnBha3M1eFdFRGg4MFdtMXRoSE9VQmV2NitCcndUOStZM0xQVGUKZFFJREFRQUIKLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0tCg=="
 }

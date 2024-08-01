@@ -7,7 +7,7 @@ module.exports = (env, argv) => {
   return {
     mode: isProduction ? 'production' : 'development',
     entry: {
-      content: './src/content.js', 
+      content: './src/content.js',
       background: './src/background.js'
     },
     output: {
@@ -42,6 +42,8 @@ module.exports = (env, argv) => {
           { from: 'src/panel.js', to: 'panel.js' },
           { from: 'src/generalTags.js', to: 'generalTags.js' },
           { from: 'src/variableResolution.js', to: 'variableResolution.js' },
+          { from: 'src/marked.min.js', to: 'marked.min.js' },
+          { from: 'src/github-markdown.min.css', to: 'github-markdown.min.css' },
         ]
       }),
     ],

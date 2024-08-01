@@ -505,12 +505,11 @@ function cleanEscapedBraces(task) {
 
 function displayResult(response, isTestTaskButton = false) {
   if (isTestTaskButton) {
-    // Direct the response to the 'pageintel-aiResponse' div specifically for test tasks
     const aiResponseElement = document.getElementById('pageintel-aiResponse');
-    aiResponseElement.textContent = response;
-    aiResponseElement.style.display = 'block'; // Make sure it is visible
+    aiResponseElement.innerHTML = marked.parse(response);
+    aiResponseElement.classList.add('markdown-body');
+    aiResponseElement.style.display = 'block';
   } else {
-    // Existing functionality for handling normal tasks
     chrome.storage.sync.get(['displayInPopup'], function (items) {
       var displayInPopup = items.displayInPopup;
 
@@ -523,12 +522,13 @@ function displayResult(response, isTestTaskButton = false) {
               <strong style="color: inherit !important;">${response.startsWith('Error:') ? 'Error' : 'Response'}:</strong>
               <span id="pageintel-copy-result" title="copy content" style="position: absolute !important; top: 0 !important; right: 30px !important; cursor: pointer !important; font-size: 30px !important;">&#xe14d;</span>
               <span id="pageintel-close-result" style="position: absolute !important; top: 0 !important; right: 0 !important; cursor: pointer !important; font-size: 30px !important;">&times;</span>
-
-              <pre style="white-space: pre-wrap; margin-top: 20px;">${response}</pre>
+              <div id="markdown-content" class="markdown-body" style="margin-top: 20px;"></div>
               <div id="pageintel-copy-message" style="position: absolute; top: 30px; right: 0; background-color: #A9A9A9; color: white; padding: 5px 10px; border-radius: 4px; opacity: 0; transition: opacity 0.3s;">Copied to clipboard!</div>
             </div>
           `;
-          resultContainer.style.display = 'block';
+          
+          // Parse and insert markdown content
+          document.getElementById('markdown-content').innerHTML = marked.parse(response);
 
           // Add event listener to the copy button
           document.getElementById('pageintel-copy-result').addEventListener('click', function () {
@@ -550,7 +550,6 @@ function displayResult(response, isTestTaskButton = false) {
     });
   }
 }
-
 
 function showCopyMessage() {
   var copyMessage = document.getElementById('pageintel-copy-message');
